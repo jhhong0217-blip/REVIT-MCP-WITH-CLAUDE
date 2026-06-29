@@ -1,0 +1,25 @@
+# Build output
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+
+# NuGet
+packages/
+*.nupkg
+
+# Revit local files
+*.rvt.bak
+*.rfa.bak
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temp
+*.tmp
+*.temp

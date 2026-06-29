@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
@@ -319,7 +319,7 @@ namespace RevitMCP.Addin.Tools.Automation
     }
 
     // ── 경고 일괄 해소 시도 ───────────────────────────────────────
-    public class ResolveWarningsTool : ToolBase
+    public class GetWarningsDetailTool : ToolBase
     {
         public override string Name => "get_warnings_detail";
         public override string Description => "모델 경고를 유형별로 분류하고 해소 방법을 제안합니다.";

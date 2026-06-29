@@ -1,9 +1,9 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitMCP.Addin.Tools.View
+namespace RevitMCP.Addin.Tools.Analysis
 {
     // ── 미태그 요소 탐지 ──────────────────────────────────────────
     public class FindUntaggedElementsTool : ToolBase

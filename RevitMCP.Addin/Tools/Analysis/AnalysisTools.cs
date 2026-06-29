@@ -1,9 +1,9 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace RevitMCP.Addin.Tools.View
+namespace RevitMCP.Addin.Tools.Analysis
 {
     public class GetModelInfoTool : ToolBase
     {
