@@ -1,6 +1,6 @@
 # RevitMCP — AI 기반 Revit 자동화 플랫폼
 
-Claude 등 MCP 클라이언트에서 Revit 모델을 직접 제어할 수 있는 Revit Addin입니다.
+**Claude Desktop 앱**과 Revit을 연결하여 모델링 자동화, 도서 자동화, 충돌 검사 등을 AI로 처리할 수 있는 Revit Addin입니다.
 
 ## 지원 버전
 | Revit | .NET | 상태 |
@@ -9,46 +9,43 @@ Claude 등 MCP 클라이언트에서 Revit 모델을 직접 제어할 수 있는
 | 2026 | 4.8 | ✅ 지원 |
 | 2027 | 4.8 | ✅ 지원 |
 
-## 설치
+> ⚠️ **Claude Desktop 전용입니다.** Claude Code(터미널)에서는 동작하지 않습니다.
 
-### 1. 빌드
+---
+
+## 설치 방법
+
+### 사전 준비
+- [Revit 2025 / 2026 / 2027](https://www.autodesk.com/products/revit) 설치
+- [.NET SDK 4.8 이상](https://dotnet.microsoft.com/download) 설치
+- [Claude Desktop 앱](https://claude.ai/download) 설치
+
+### 설치 (Setup.ps1 한 번 실행으로 완료)
+
 ```powershell
-# 특정 버전
-.\build.ps1 -Version 2026
-
-# 전체 버전
-.\build.ps1 -Version All
+.\Setup.ps1
 ```
 
-### 2. 설치
-```powershell
-.\install.ps1 -Version 2026
+실행하면 아래가 자동으로 처리됩니다:
+1. 설치된 Revit 버전 자동 감지
+2. 버전 선택 메뉴 표시
+3. Revit Addin 빌드 및 설치
+4. Claude Desktop MCP 자동 등록 (`claude_desktop_config.json`)
+
+### 사용 방법
+
 ```
-
-### 3. Revit 재시작
-Revit을 재시작하면 **RevitMCP** 탭이 리본에 나타납니다.
-
-### 4. MCP 서버 시작
-`RevitMCP` 탭 → **MCP 시작** 버튼 클릭
-
-### 5. Claude Code 연결
-`claude_mcp_config.json`의 내용을 Claude Code 설정에 추가:
-```json
-{
-  "mcpServers": {
-    "revit-mcp": {
-      "transport": "http",
-      "url": "http://localhost:9876/"
-    }
-  }
-}
+1. Revit 재시작
+2. 'RevitMCP' 탭 → [MCP 시작] 버튼 클릭
+3. Claude Desktop 앱 재시작
+4. Claude에게 Revit 작업을 요청하세요!
 ```
 
 ---
 
 ## 제공 도구 (MCP Tools)
 
-### 요소 조회/조작
+### 요소 조회 / 조작
 | 도구 | 설명 |
 |------|------|
 | `get_elements` | 카테고리·레벨 필터로 요소 목록 조회 |
@@ -91,7 +88,7 @@ Revit을 재시작하면 **RevitMCP** 탭이 리본에 나타납니다.
 | `filter_elements_by_parameter` | 파라미터 값으로 요소 필터 |
 | `export_parameters_to_csv` | 파라미터 CSV 내보내기 |
 
-### 분석/검토
+### 분석 / 검토
 | 도구 | 설명 |
 |------|------|
 | `get_model_info` | 프로젝트 전체 정보 조회 |
@@ -102,7 +99,7 @@ Revit을 재시작하면 **RevitMCP** 탭이 리본에 나타납니다.
 
 ---
 
-## 사용 예시 (Claude와 대화)
+## 사용 예시 (Claude Desktop과 대화)
 
 ```
 "1층 평면도의 모든 벽을 조회해줘"
@@ -114,25 +111,27 @@ Revit을 재시작하면 **RevitMCP** 탭이 리본에 나타납니다.
 "문 일람표 만들어서 PDF로 내보내줘"
 → create_schedule(category: "OST_Doors") → export_sheets_to_pdf
 
-"충돌 검사해줘 (구조와 MEP)"
+"구조 기둥과 덕트 충돌 검사해줘"
 → clash_detection(category1: "OST_StructuralColumns", category2: "OST_DuctCurves")
 ```
+
+---
 
 ## 아키텍처
 
 ```
-Claude Code / AI Client
-        │ HTTP JSON-RPC 2.0
-        ▼
-  RevitMCP Server (localhost:9876)
-  ┌─────────────────────────────┐
-  │  MCPServer (HttpListener)   │
-  │  ToolRegistry               │
-  │  RevitEventDispatcher       │ ←─ Revit 메인 스레드 위임
-  └─────────────────────────────┘
-        │ ExternalEvent
-        ▼
-  Revit API (메인 스레드)
+Claude Desktop 앱
+       │ HTTP JSON-RPC 2.0
+       ▼
+RevitMCP Server (localhost:9876)
+┌─────────────────────────────┐
+│  MCPServer (HttpListener)   │
+│  ToolRegistry (30개 도구)   │
+│  RevitEventDispatcher       │ ←─ Revit 메인 스레드 위임
+└─────────────────────────────┘
+       │ ExternalEvent
+       ▼
+Revit API (메인 스레드)
 ```
 
 ## 로그 위치
