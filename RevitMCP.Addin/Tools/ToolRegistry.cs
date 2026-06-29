@@ -80,6 +80,13 @@ namespace RevitMCP.Addin.Tools
                 new ReplaceFamilyTypeTool(),       // 패밀리 타입 일괄 교체
                 new ExportFamilyTool(),            // 패밀리 내보내기
 
+                // ── 패밀리 파라미터 편집 ─────────────────────────────
+                new GetFamilyParametersTool(),     // 파라미터 목록 조회
+                new AddFamilyParameterTool(),      // 파라미터 추가
+                new RemoveFamilyParameterTool(),   // 파라미터 삭제
+                new SetFamilyParameterFormulaTool(), // 수식 설정
+                new AddFamilyTypeTool(),           // 패밀리 타입 추가
+
                 // ── 작업세트 관리 ────────────────────────────────
                 new GetWorksetsTool(),             // 작업세트 목록
                 new CreateWorksetTool(),           // 작업세트 생성

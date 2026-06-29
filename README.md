@@ -43,7 +43,7 @@
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 50개
+## 제공 도구 (MCP Tools) — 총 55개
 
 ### 요소 조회 / 조작
 | 도구 | 설명 |
@@ -111,13 +111,18 @@
 | `color_clash_elements` | 간섭 요소 색상 강조 표시 |
 | `purge_unused` | 미사용 패밀리/타입 정리 |
 
-### 패밀리 관리
+### 패밀리 관리 / 파라미터 편집
 | 도구 | 설명 |
 |------|------|
 | `list_families` | 로드된 패밀리 전체 목록 조회 |
 | `load_family` | .rfa 파일 패밀리 로드 |
 | `replace_family_type` | 패밀리 타입 일괄 교체 |
 | `export_family` | 패밀리 .rfa 파일로 내보내기 |
+| `get_family_parameters` | 패밀리 파라미터 목록 조회 |
+| `add_family_parameter` | 패밀리에 파라미터 추가 (인스턴스/타입, 유형, 그룹 지정) |
+| `remove_family_parameter` | 패밀리 파라미터 삭제 |
+| `set_family_parameter_formula` | 파라미터 수식 설정 (예: Width * 2) |
+| `add_family_type` | 패밀리에 새 타입 추가 및 파라미터 값 설정 |
 
 ### 작업세트 관리
 | 도구 | 설명 |
