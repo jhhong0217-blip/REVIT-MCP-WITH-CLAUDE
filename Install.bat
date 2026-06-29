@@ -11,17 +11,34 @@ echo    RevitMCP Installer
 echo  =====================================================
 echo.
 
-:: .NET SDK check
+:: ── .NET SDK check / auto install ────────────────────────────────
 where dotnet >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] .NET SDK not found.
-    echo         https://dotnet.microsoft.com/download
-    goto :END
+    echo [INFO] .NET SDK not found. Downloading...
+    echo        This may take a few minutes. Please wait.
+    echo.
+    curl -L -o "%TEMP%\dotnet-sdk-installer.exe" "https://aka.ms/dotnet/8.0/dotnet-sdk-win-x64.exe"
+    if errorlevel 1 (
+        echo [ERROR] Download failed. Check internet connection.
+        goto :END
+    )
+    echo [INFO] Installing .NET SDK...
+    "%TEMP%\dotnet-sdk-installer.exe" /install /quiet /norestart
+    if errorlevel 1 (
+        echo [ERROR] Install failed. Try running as Administrator.
+        del "%TEMP%\dotnet-sdk-installer.exe" >nul 2>&1
+        goto :END
+    )
+    del "%TEMP%\dotnet-sdk-installer.exe" >nul 2>&1
+    set "PATH=%PATH%;%ProgramFiles%\dotnet"
+    echo [OK] .NET SDK installed.
+    echo.
 )
+
 for /f "tokens=*" %%v in ('dotnet --version 2^>nul') do set "SDKVER=%%v"
 echo [OK] .NET SDK %SDKVER%
 
-:: Detect Revit
+:: ── Detect Revit ─────────────────────────────────────────────────
 echo.
 set "HAS2025=0"
 set "HAS2026=0"
@@ -39,7 +56,7 @@ if "%HAS2025%%HAS2026%%HAS2027%"=="000" (
     goto :END
 )
 
-:: Menu
+:: ── Version menu ─────────────────────────────────────────────────
 echo.
 echo  Select version to install:
 if "%HAS2025%"=="1" echo    [1] Revit 2025
@@ -74,17 +91,16 @@ if "%HAS2026%"=="1" call :BUILD 2026
 if "%HAS2027%"=="1" call :BUILD 2027
 goto :MCP
 
+:: ── Claude Desktop MCP register ──────────────────────────────────
 :MCP
 echo.
 echo [INFO] Registering Claude Desktop MCP...
-
 set "CFGDIR=%APPDATA%\Claude"
 set "CFG=%CFGDIR%\claude_desktop_config.json"
 if not exist "%CFGDIR%" mkdir "%CFGDIR%"
 if not exist "%CFG%" echo {} > "%CFG%"
 
 set "JSF=%TEMP%\mcp_reg.js"
-
 echo var fs=new ActiveXObject("Scripting.FileSystemObject"); > "%JSF%"
 echo var p="%CFG:\=\\%"; >> "%JSF%"
 echo var cfg={}; >> "%JSF%"
@@ -93,7 +109,6 @@ echo if(!cfg.mcpServers)cfg.mcpServers={}; >> "%JSF%"
 echo cfg.mcpServers["revit-mcp"]={transport:"http",url:"http://localhost:9876/"}; >> "%JSF%"
 echo var fw=fs.CreateTextFile(p,true,true);fw.Write(JSON.stringify(cfg,null,2));fw.Close(); >> "%JSF%"
 echo WScript.Echo("[OK] Claude Desktop MCP registered."); >> "%JSF%"
-
 cscript //nologo "%JSF%"
 del "%JSF%" >nul 2>&1
 
@@ -117,7 +132,6 @@ set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP.addin"
 
 dotnet build "%PROJ%" /p:RevitVersion=%1 /p:Configuration=Release /p:OutputPath="%OUT%"
 if errorlevel 1 (
-    echo.
     echo [ERROR] Build failed for Revit %1
     goto :EOF
 )
@@ -125,11 +139,11 @@ echo [OK] Build succeeded.
 
 if not exist "%DST%" mkdir "%DST%"
 xcopy /E /Y /Q "%OUT%\*" "%DST%\" >nul
-echo [OK] DLL copied to %DST%
+echo [OK] DLL copied.
 
 if not exist "%APPDATA%\Autodesk\Revit\Addins\%1" mkdir "%APPDATA%\Autodesk\Revit\Addins\%1"
 copy /Y "%ADDIN_SRC%" "%ADDIN_DST%" >nul
-echo [OK] Addin registered: %ADDIN_DST%
+echo [OK] Addin registered.
 goto :EOF
 
 :END
