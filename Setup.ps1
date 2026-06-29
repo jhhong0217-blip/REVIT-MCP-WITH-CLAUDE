@@ -195,13 +195,14 @@ try {
     Write-Warn "Claude Code settings.json 설정 실패: $_"
 }
 
-# 2) Claude Code 전역 MCP 설정 (~/.claude/mcp.json)
-$claudeCodeMcp = "$env:USERPROFILE\.claude\mcp.json"
+# 2) claude mcp add 명령으로 Claude Code에 영구 등록
 try {
-    Set-McpEntry $claudeCodeMcp
-    Write-Ok "Claude Code MCP 등록 → $claudeCodeMcp"
+    $claudeExe = (Get-Command claude -ErrorAction Stop).Source
+    & $claudeExe mcp add revit-mcp --transport http http://localhost:9876/ 2>&1 | Out-Null
+    Write-Ok "Claude Code MCP 영구 등록 완료"
 } catch {
-    Write-Warn "Claude Code MCP 설정 실패: $_"
+    Write-Warn "claude CLI를 찾을 수 없습니다. 나중에 아래 명령을 한 번만 실행하세요:"
+    Write-Host "    claude mcp add revit-mcp --transport http http://localhost:9876/" -ForegroundColor Yellow
 }
 
 # 2) Claude Desktop 설정 (%APPDATA%\Claude\claude_desktop_config.json)
