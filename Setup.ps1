@@ -133,56 +133,55 @@ foreach ($t in $targets) {
     $results[$t] = Install-ForVersion $t
 }
 
-# ── Claude Code MCP 설정 안내 ─────────────────────────────────────
+# ── Claude MCP 설정 자동 등록 ────────────────────────────────────
 Write-Host ""
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-Write-Host "  Claude Code MCP 설정" -ForegroundColor White
+Write-Host "  Claude MCP 자동 등록" -ForegroundColor White
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
 
-# claude_desktop_config.json 자동 업데이트 시도
-$claudeConfigPaths = @(
-    "$AppData\Claude\claude_desktop_config.json",
-    "$env:USERPROFILE\.claude\settings.json"
-)
-$configUpdated = $false
-
-foreach ($cfgPath in $claudeConfigPaths) {
-    if (Test-Path $cfgPath) {
-        try {
-            $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
-            # mcpServers 노드가 없으면 추가
-            if (-not $cfg.PSObject.Properties["mcpServers"]) {
-                $cfg | Add-Member -MemberType NoteProperty -Name "mcpServers" -Value ([PSCustomObject]@{})
-            }
-            $cfg.mcpServers | Add-Member -MemberType NoteProperty -Name "revit-mcp" -Value ([PSCustomObject]@{
-                transport = "http"
-                url       = "http://localhost:9876/"
-            }) -Force
-            $cfg | ConvertTo-Json -Depth 10 | Set-Content $cfgPath -Encoding UTF8
-            Write-Ok "Claude 설정 자동 업데이트 완료: $cfgPath"
-            $configUpdated = $true
-            break
-        } catch {
-            Write-Warn "자동 업데이트 실패 — 수동으로 추가해주세요."
-        }
+function Set-McpEntry($path) {
+    # 파일 없으면 빈 JSON으로 생성
+    if (-not (Test-Path $path)) {
+        New-Item -ItemType File -Force $path | Out-Null
+        Set-Content $path "{}" -Encoding UTF8
     }
+
+    $raw = Get-Content $path -Raw -Encoding UTF8
+    if ([string]::IsNullOrWhiteSpace($raw)) { $raw = "{}" }
+    $cfg = $raw | ConvertFrom-Json
+
+    # mcpServers 키 없으면 추가
+    if (-not $cfg.PSObject.Properties["mcpServers"]) {
+        $cfg | Add-Member -MemberType NoteProperty -Name "mcpServers" -Value ([PSCustomObject]@{})
+    }
+
+    # revit-mcp 항목 추가/덮어쓰기
+    $cfg.mcpServers | Add-Member -MemberType NoteProperty -Name "revit-mcp" -Value ([PSCustomObject]@{
+        transport = "http"
+        url       = "http://localhost:9876/"
+    }) -Force
+
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8
 }
 
-if (-not $configUpdated) {
-    Write-Warn "Claude 설정 파일을 찾지 못했습니다. 아래 내용을 수동으로 추가하세요:"
-    Write-Host @"
+# 1) Claude Code 전역 설정 (~/.claude/settings.json)
+$claudeCodeSettings = "$env:USERPROFILE\.claude\settings.json"
+try {
+    New-Item -ItemType Directory -Force (Split-Path $claudeCodeSettings) | Out-Null
+    Set-McpEntry $claudeCodeSettings
+    Write-Ok "Claude Code 전역 설정 등록 → $claudeCodeSettings"
+} catch {
+    Write-Warn "Claude Code 설정 실패: $_"
+}
 
-  파일: %APPDATA%\Claude\claude_desktop_config.json
-
-  {
-    "mcpServers": {
-      "revit-mcp": {
-        "transport": "http",
-        "url": "http://localhost:9876/"
-      }
-    }
-  }
-"@ -ForegroundColor Yellow
+# 2) Claude Desktop 설정 (%APPDATA%\Claude\claude_desktop_config.json)
+$claudeDesktopConfig = "$AppData\Claude\claude_desktop_config.json"
+try {
+    New-Item -ItemType Directory -Force (Split-Path $claudeDesktopConfig) | Out-Null
+    Set-McpEntry $claudeDesktopConfig
+    Write-Ok "Claude Desktop 설정 등록 → $claudeDesktopConfig"
+} catch {
+    Write-Warn "Claude Desktop 설정 실패: $_"
 }
 
 # ── 최종 결과 ─────────────────────────────────────────────────────
