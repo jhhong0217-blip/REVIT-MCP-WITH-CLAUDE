@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitMCP</Name>
+    <Assembly>%AppData%\Autodesk\Revit\Addins\2026\RevitMCP\RevitMCP.Addin.dll</Assembly>
+    <AddInId>A1B2C3D4-E5F6-7890-ABCD-EF1234567891</AddInId>
+    <FullClassName>RevitMCP.Addin.App</FullClassName>
+    <VendorId>REVITMCP</VendorId>
+    <VendorDescription>RevitMCP — AI 기반 Revit 자동화</VendorDescription>
+  </AddIn>
+</RevitAddIns>
