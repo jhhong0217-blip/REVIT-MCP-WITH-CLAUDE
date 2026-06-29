@@ -175,7 +175,27 @@ function Set-McpEntry($path) {
     $cfg | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8
 }
 
-# 1) Claude Code 전역 MCP 설정 (~/.claude/mcp.json)
+# 1) Claude Code settings.json — revit-mcp 자동 승인
+$claudeSettings = "$env:USERPROFILE\.claude\settings.json"
+try {
+    New-Item -ItemType Directory -Force (Split-Path $claudeSettings) | Out-Null
+    if (-not (Test-Path $claudeSettings)) { Set-Content $claudeSettings "{}" -Encoding UTF8 }
+    $raw = Get-Content $claudeSettings -Raw -Encoding UTF8
+    if ([string]::IsNullOrWhiteSpace($raw)) { $raw = "{}" }
+    $cfg = $raw | ConvertFrom-Json
+
+    if (-not $cfg.PSObject.Properties["enabledMcpjsonServers"]) {
+        $cfg | Add-Member -MemberType NoteProperty -Name "enabledMcpjsonServers" -Value @("revit-mcp")
+    } elseif ($cfg.enabledMcpjsonServers -notcontains "revit-mcp") {
+        $cfg.enabledMcpjsonServers += "revit-mcp"
+    }
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content $claudeSettings -Encoding UTF8
+    Write-Ok "Claude Code 자동 승인 설정 → $claudeSettings"
+} catch {
+    Write-Warn "Claude Code settings.json 설정 실패: $_"
+}
+
+# 2) Claude Code 전역 MCP 설정 (~/.claude/mcp.json)
 $claudeCodeMcp = "$env:USERPROFILE\.claude\mcp.json"
 try {
     Set-McpEntry $claudeCodeMcp
