@@ -1,132 +1,113 @@
 @echo off
 chcp 437 > nul
-setlocal
+setlocal EnableDelayedExpansion
 
 set "ROOT=%~dp0"
 set "PROJ=%ROOT%RevitMCP.Addin\RevitMCP.Addin.csproj"
 
 echo.
 echo  =====================================================
-echo    RevitMCP - AI Revit Automation / Install
+echo    RevitMCP - AI Revit Automation Installer
 echo  =====================================================
 echo.
 
-:: dotnet check
+:: ── .NET SDK check ───────────────────────────────────────────────
 where dotnet >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] .NET SDK not found.
-    echo         Please install from: https://dotnet.microsoft.com/download
-    goto :END
+    echo         https://dotnet.microsoft.com/download
+    pause & exit /b
 )
-echo [OK] .NET SDK found.
+for /f "tokens=*" %%v in ('dotnet --version 2^>nul') do set "SDKVER=%%v"
+echo [OK] .NET SDK %SDKVER%
 
-:: Detect Revit versions
+:: ── Revit version detect ─────────────────────────────────────────
 echo.
-echo [INFO] Detecting Revit versions...
-set "HAS2025=0" & set "HAS2026=0" & set "HAS2027=0" & set "FOUND=0"
-if exist "C:\Program Files\Autodesk\Revit 2025\Revit.exe" ( set "HAS2025=1" & set /a FOUND+=1 & echo [OK] Revit 2025 found )
-if exist "C:\Program Files\Autodesk\Revit 2026\Revit.exe" ( set "HAS2026=1" & set /a FOUND+=1 & echo [OK] Revit 2026 found )
-if exist "C:\Program Files\Autodesk\Revit 2027\Revit.exe" ( set "HAS2027=1" & set /a FOUND+=1 & echo [OK] Revit 2027 found )
+echo [INFO] Detecting Revit...
+set "HAS2025=0" & set "HAS2026=0" & set "HAS2027=0"
+if exist "C:\Program Files\Autodesk\Revit 2025\Revit.exe" ( set "HAS2025=1" & echo [OK] Revit 2025 )
+if exist "C:\Program Files\Autodesk\Revit 2026\Revit.exe" ( set "HAS2026=1" & echo [OK] Revit 2026 )
+if exist "C:\Program Files\Autodesk\Revit 2027\Revit.exe" ( set "HAS2027=1" & echo [OK] Revit 2027 )
 
-if "%FOUND%"=="0" (
-    echo [ERROR] No Revit installation found.
-    goto :END
+if "%HAS2025%%HAS2026%%HAS2027%"=="000" (
+    echo [ERROR] No Revit found.
+    pause & exit /b
 )
 
-:: Version menu
+:: ── Version menu ─────────────────────────────────────────────────
 echo.
-echo  Select version to install:
-set "IDX=0"
-if "%HAS2025%"=="1" ( set /a IDX+=1 & set "M!IDX!=2025" & echo    [!IDX!] Revit 2025 )
-if "%HAS2026%"=="1" ( set /a IDX+=1 & set "M!IDX!=2026" & echo    [!IDX!] Revit 2026 )
-if "%HAS2027%"=="1" ( set /a IDX+=1 & set "M!IDX!=2027" & echo    [!IDX!] Revit 2027 )
-set /a IDX+=1
-echo    [%IDX%] Install All
+echo  Select version:
+set "OPT=0"
+if "%HAS2025%"=="1" ( set /a OPT+=1 & set "V!OPT!=2025" & echo    [!OPT!] Revit 2025 )
+if "%HAS2026%"=="1" ( set /a OPT+=1 & set "V!OPT!=2026" & echo    [!OPT!] Revit 2026 )
+if "%HAS2027%"=="1" ( set /a OPT+=1 & set "V!OPT!=2027" & echo    [!OPT!] Revit 2027 )
+set /a OPT+=1
+echo    [!OPT!] All
 echo.
+set /p "SEL= Number: "
 
-set /p "SEL= Enter number: "
-
-if "%SEL%"=="%IDX%" (
+if "!SEL!"=="!OPT!" (
     if "%HAS2025%"=="1" call :BUILD 2025
     if "%HAS2026%"=="1" call :BUILD 2026
     if "%HAS2027%"=="1" call :BUILD 2027
 ) else (
-    setlocal EnableDelayedExpansion
-    call :BUILD !M%SEL%!
-    endlocal
+    set "TARGET=!V%SEL%!"
+    if "!TARGET!"=="" ( echo [ERROR] Invalid selection. & pause & exit /b )
+    call :BUILD !TARGET!
 )
 
-:: Register Claude Desktop MCP via JScript
+:: ── Claude Desktop MCP register ──────────────────────────────────
 echo.
 echo [INFO] Registering Claude Desktop MCP...
-call :WRITE_JS
-cscript //nologo "%TEMP%\revitmcp_cfg.js"
-del "%TEMP%\revitmcp_cfg.js" >nul 2>&1
+set "CFGDIR=%APPDATA%\Claude"
+set "CFG=%CFGDIR%\claude_desktop_config.json"
+if not exist "%CFGDIR%" mkdir "%CFGDIR%"
+if not exist "%CFG%" echo {} > "%CFG%"
 
+set "JSF=%TEMP%\mcp_reg.js"
+> "%JSF%" echo var fs=new ActiveXObject("Scripting.FileSystemObject");
+>> "%JSF%" echo var p="%CFG:\=\\%";
+>> "%JSF%" echo var cfg={};
+>> "%JSF%" echo try{var f=fs.OpenTextFile(p,1,false,-1);var r=f.ReadAll();f.Close();if(r.trim()!="")cfg=JSON.parse(r);}catch(e){}
+>> "%JSF%" echo if(!cfg.mcpServers)cfg.mcpServers={};
+>> "%JSF%" echo cfg.mcpServers["revit-mcp"]={transport:"http",url:"http://localhost:9876/"};
+>> "%JSF%" echo var fw=fs.CreateTextFile(p,true,true);fw.Write(JSON.stringify(cfg,null,2));fw.Close();
+>> "%JSF%" echo WScript.Echo("[OK] Claude Desktop MCP registered.");
+
+cscript //nologo "%JSF%"
+del "%JSF%" >nul 2>&1
+
+:: ── Done ─────────────────────────────────────────────────────────
 echo.
 echo  =====================================================
-echo   Install Complete!
+echo   Installation Complete!
 echo.
-echo   How to use:
-echo    1. Restart Revit
-echo    2. Click [Start MCP] in RevitMCP tab
-echo    3. Use Claude Desktop to automate Revit!
+echo   1. Restart Revit
+echo   2. Click [Start MCP] in RevitMCP tab
+echo   3. Start Revit automation with Claude Desktop!
 echo  =====================================================
 echo.
-goto :END
+pause
+exit /b
 
-:: ── BUILD function ──────────────────────────────────────────────
+:: ── BUILD subroutine ─────────────────────────────────────────────
 :BUILD
-set "VER=%1"
 echo.
-echo  ----- Building for Revit %VER% -----
-set "OUT=%ROOT%RevitMCP.Addin\bin\%VER%"
-set "DST=%APPDATA%\Autodesk\Revit\Addins\%VER%\RevitMCP"
-set "ADDIN_SRC=%ROOT%addin\RevitMCP.%VER%.addin"
-set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%VER%\RevitMCP.addin"
+echo  ----- Revit %1 -----
+set "OUT=%ROOT%RevitMCP.Addin\bin\%1"
+set "DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP"
+set "ADDIN_SRC=%ROOT%addin\RevitMCP.%1.addin"
+set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP.addin"
 
-dotnet build "%PROJ%" /p:RevitVersion=%VER% /p:Configuration=Release /p:OutputPath="%OUT%" --nologo
-if errorlevel 1 (
-    echo [ERROR] Build failed for Revit %VER%
-    goto :EOF
-)
+dotnet build "%PROJ%" /p:RevitVersion=%1 /p:Configuration=Release /p:OutputPath="%OUT%" --nologo
+if errorlevel 1 ( echo [ERROR] Build failed for Revit %1 & goto :EOF )
 echo [OK] Build succeeded.
 
 if not exist "%DST%" mkdir "%DST%"
 xcopy /E /Y /Q "%OUT%\*" "%DST%\" >nul
-echo [OK] DLL copied to %DST%
+echo [OK] DLL copied.
 
-if not exist "%APPDATA%\Autodesk\Revit\Addins\%VER%" mkdir "%APPDATA%\Autodesk\Revit\Addins\%VER%"
+if not exist "%APPDATA%\Autodesk\Revit\Addins\%1" mkdir "%APPDATA%\Autodesk\Revit\Addins\%1"
 copy /Y "%ADDIN_SRC%" "%ADDIN_DST%" >nul
-echo [OK] Addin registered: %ADDIN_DST%
+echo [OK] Addin registered.
 goto :EOF
-
-:: ── Write JScript to temp file ──────────────────────────────────
-:WRITE_JS
-set "CFG=%APPDATA%\Claude\claude_desktop_config.json"
-set "CFG_JS=%CFG:\=\\%"
-set "CFGDIR=%APPDATA%\Claude"
-if not exist "%CFGDIR%" mkdir "%CFGDIR%"
-
-> "%TEMP%\revitmcp_cfg.js" (
-    echo var fs = new ActiveXObject^("Scripting.FileSystemObject"^);
-    echo var p = "%CFG_JS%";
-    echo var cfg = {};
-    echo if ^(fs.FileExists^(p^)^) {
-    echo   try {
-    echo     var f = fs.OpenTextFile^(p,1,false,-1^);
-    echo     var r = f.ReadAll^(^); f.Close^(^);
-    echo     if ^(r.replace^(/\s/g,""^) != ""^) cfg = eval^("^("+r+"^)"^);
-    echo   } catch^(e^){}
-    echo }
-    echo if ^(!cfg.mcpServers^) cfg.mcpServers={};
-    echo cfg.mcpServers["revit-mcp"]={transport:"http",url:"http://localhost:9876/"};
-    echo var j=JSON.stringify^(cfg,null,2^);
-    echo var fw=fs.CreateTextFile^(p,true,true^);
-    echo fw.Write^(j^); fw.Close^(^);
-    echo WScript.Echo^("[OK] Claude Desktop MCP registered: %CFG_JS%"^);
-)
-goto :EOF
-
-:END
-pause
