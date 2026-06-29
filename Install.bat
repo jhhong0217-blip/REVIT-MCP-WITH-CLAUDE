@@ -1,168 +1,132 @@
 @echo off
-chcp 65001 > nul
-setlocal EnableDelayedExpansion
-
-echo.
-echo ============================================================
-echo    RevitMCP  -  AI 기반 Revit 자동화  /  올인원 설치
-echo ============================================================
-echo.
+chcp 437 > nul
+setlocal
 
 set "ROOT=%~dp0"
-set "APPDATA_PATH=%APPDATA%"
 set "PROJ=%ROOT%RevitMCP.Addin\RevitMCP.Addin.csproj"
 
-:: ── dotnet 확인 ──────────────────────────────────────────────────
+echo.
+echo  =====================================================
+echo    RevitMCP - AI Revit Automation / Install
+echo  =====================================================
+echo.
+
+:: dotnet check
 where dotnet >nul 2>&1
 if errorlevel 1 (
-    echo [오류] .NET SDK 가 설치되어 있지 않습니다.
-    echo        https://dotnet.microsoft.com/download 에서 설치 후 다시 실행하세요.
+    echo [ERROR] .NET SDK not found.
+    echo         Please install from: https://dotnet.microsoft.com/download
     goto :END
 )
-for /f "tokens=*" %%v in ('dotnet --version 2^>nul') do set DOTNET_VER=%%v
-echo [확인] .NET SDK %DOTNET_VER%
+echo [OK] .NET SDK found.
 
-:: ── Revit 버전 감지 ──────────────────────────────────────────────
+:: Detect Revit versions
 echo.
-echo [탐색] 설치된 Revit 버전 확인 중...
-set FOUND_COUNT=0
-set "V1=" & set "V2=" & set "V3="
+echo [INFO] Detecting Revit versions...
+set "HAS2025=0" & set "HAS2026=0" & set "HAS2027=0" & set "FOUND=0"
+if exist "C:\Program Files\Autodesk\Revit 2025\Revit.exe" ( set "HAS2025=1" & set /a FOUND+=1 & echo [OK] Revit 2025 found )
+if exist "C:\Program Files\Autodesk\Revit 2026\Revit.exe" ( set "HAS2026=1" & set /a FOUND+=1 & echo [OK] Revit 2026 found )
+if exist "C:\Program Files\Autodesk\Revit 2027\Revit.exe" ( set "HAS2027=1" & set /a FOUND+=1 & echo [OK] Revit 2027 found )
 
-if exist "C:\Program Files\Autodesk\Revit 2025\Revit.exe" (
-    set "V1=2025" & set /a FOUND_COUNT+=1
-    echo        Revit 2025 발견
-)
-if exist "C:\Program Files\Autodesk\Revit 2026\Revit.exe" (
-    set "V2=2026" & set /a FOUND_COUNT+=1
-    echo        Revit 2026 발견
-)
-if exist "C:\Program Files\Autodesk\Revit 2027\Revit.exe" (
-    set "V3=2027" & set /a FOUND_COUNT+=1
-    echo        Revit 2027 발견
-)
-
-if %FOUND_COUNT%==0 (
-    echo [오류] 설치된 Revit 을 찾을 수 없습니다.
+if "%FOUND%"=="0" (
+    echo [ERROR] No Revit installation found.
     goto :END
 )
 
-:: ── 버전 선택 ────────────────────────────────────────────────────
+:: Version menu
 echo.
-echo  설치할 버전을 선택하세요:
-set IDX=0
-if defined V1 ( set /a IDX+=1 & set "OPT!IDX!=2025" & echo    [!IDX!] Revit 2025 )
-if defined V2 ( set /a IDX+=1 & set "OPT!IDX!=2026" & echo    [!IDX!] Revit 2026 )
-if defined V3 ( set /a IDX+=1 & set "OPT!IDX!=2027" & echo    [!IDX!] Revit 2027 )
+echo  Select version to install:
+set "IDX=0"
+if "%HAS2025%"=="1" ( set /a IDX+=1 & set "M!IDX!=2025" & echo    [!IDX!] Revit 2025 )
+if "%HAS2026%"=="1" ( set /a IDX+=1 & set "M!IDX!=2026" & echo    [!IDX!] Revit 2026 )
+if "%HAS2027%"=="1" ( set /a IDX+=1 & set "M!IDX!=2027" & echo    [!IDX!] Revit 2027 )
 set /a IDX+=1
-set "OPT!IDX!=ALL"
-echo    [!IDX!] 전체 설치
+echo    [%IDX%] Install All
 echo.
-set /p CHOICE=" 번호 입력: "
 
-if "%CHOICE%"=="!IDX!" (
-    set "TARGETS=!V1! !V2! !V3!"
+set /p "SEL= Enter number: "
+
+if "%SEL%"=="%IDX%" (
+    if "%HAS2025%"=="1" call :BUILD 2025
+    if "%HAS2026%"=="1" call :BUILD 2026
+    if "%HAS2027%"=="1" call :BUILD 2027
 ) else (
-    set "TARGETS=!OPT%CHOICE%!"
-)
-if "!TARGETS!"=="" ( echo [오류] 잘못된 선택입니다. & goto :END )
-
-:: ── 버전별 빌드 + 설치 ───────────────────────────────────────────
-for %%T in (!TARGETS!) do (
-    echo.
-    echo ------------------------------------------------------------
-    echo  Revit %%T  빌드 및 설치
-    echo ------------------------------------------------------------
-
-    set "OUT=%ROOT%RevitMCP.Addin\bin\%%T"
-    set "DST=%APPDATA_PATH%\Autodesk\Revit\Addins\%%T\RevitMCP"
-    set "ADDIN_SRC=%ROOT%addin\RevitMCP.%%T.addin"
-    set "ADDIN_DST=%APPDATA_PATH%\Autodesk\Revit\Addins\%%T\RevitMCP.addin"
-
-    echo [빌드] Revit %%T ...
-    dotnet build "%PROJ%" /p:RevitVersion=%%T /p:Configuration=Release /p:OutputPath="!OUT!" --nologo
-    if errorlevel 1 (
-        echo [오류] %%T 빌드 실패
-    ) else (
-        echo [완료] 빌드 성공
-
-        if not exist "!DST!" mkdir "!DST!"
-        xcopy /E /Y /Q "!OUT!\*" "!DST!\" >nul
-        echo [완료] DLL 복사 -^> !DST!
-
-        if not exist "%APPDATA_PATH%\Autodesk\Revit\Addins\%%T" (
-            mkdir "%APPDATA_PATH%\Autodesk\Revit\Addins\%%T"
-        )
-        copy /Y "!ADDIN_SRC!" "!ADDIN_DST!" >nul
-        echo [완료] .addin 등록 -^> !ADDIN_DST!
-    )
+    setlocal EnableDelayedExpansion
+    call :BUILD !M%SEL%!
+    endlocal
 )
 
-:: ── Claude Desktop MCP 등록 (JScript 사용, PowerShell 불필요) ────
+:: Register Claude Desktop MCP via JScript
 echo.
-echo ------------------------------------------------------------
-echo  Claude Desktop MCP 자동 등록
-echo ------------------------------------------------------------
+echo [INFO] Registering Claude Desktop MCP...
+call :WRITE_JS
+cscript //nologo "%TEMP%\revitmcp_cfg.js"
+del "%TEMP%\revitmcp_cfg.js" >nul 2>&1
 
-set "CFG_DIR=%APPDATA_PATH%\Claude"
-set "CFG=%CFG_DIR%\claude_desktop_config.json"
-
-if not exist "%CFG_DIR%" mkdir "%CFG_DIR%"
-
-:: JScript 임시 파일로 JSON 편집 (Windows 내장 cscript 사용)
-set "JS=%TEMP%\revitmcp_cfg.js"
-(
-echo var fs = new ActiveXObject^("Scripting.FileSystemObject"^);
-echo var cfgPath = "%CFG:\=\\%";
-echo var cfg = {};
-echo if ^(fs.FileExists^(cfgPath^)^) {
-echo     try {
-echo         var f = fs.OpenTextFile^(cfgPath, 1, false, -1^);
-echo         var raw = f.ReadAll^(^); f.Close^(^);
-echo         if ^(raw.trim^(^) !== ""^) cfg = eval^("^(" + raw + "^)"^);
-echo     } catch^(e^) {}
-echo }
-echo if ^(!cfg.mcpServers^) cfg.mcpServers = {};
-echo cfg.mcpServers["revit-mcp"] = { transport: "http", url: "http://localhost:9876/" };
-echo function toJson^(o, d^) {
-echo     if ^(d === undefined^) d = 0;
-echo     var s = "", i, k, v, pad = "";
-echo     for ^(i = 0; i ^< ^(d+1^)*2; i++^) pad += " ";
-echo     var pad0 = ""; for ^(i = 0; i ^< d*2; i++^) pad0 += " ";
-echo     if ^(typeof o === "object" ^&^& o !== null^) {
-echo         var keys = [], isArr = ^(o instanceof Array^);
-echo         for ^(k in o^) keys.push^(k^);
-echo         s = isArr ? "[" : "{";
-echo         for ^(i = 0; i ^< keys.length; i++^) {
-echo             k = keys[i]; v = o[k];
-echo             s += "\n" + pad + ^(isArr ? "" : '"'+k+'": '^) + toJson^(v, d+1^);
-echo             if ^(i ^< keys.length-1^) s += ",";
-echo         }
-echo         s += "\n" + pad0 + ^(isArr ? "]" : "}");
-echo     } else if ^(typeof o === "string"^) {
-echo         s = '"' + o.replace^(/\\/g,"\\\\").replace^(/"/g,'\\"'^) + '"';
-echo     } else { s = String^(o^); }
-echo     return s;
-echo }
-echo var out = toJson^(cfg^);
-echo var fw = fs.CreateTextFile^(cfgPath, true, true^);
-echo fw.Write^(out^); fw.Close^(^);
-echo WScript.Echo^("[완료] Claude Desktop MCP 등록 -^> " + cfgPath^);
-) > "%JS%"
-
-cscript //nologo "%JS%"
-del "%JS%" >nul 2>&1
-
-:: ── 완료 메시지 ──────────────────────────────────────────────────
 echo.
-echo ============================================================
-echo  설치 완료!
+echo  =====================================================
+echo   Install Complete!
 echo.
-echo  사용 방법:
-echo    1. Revit 재시작
-echo    2. 'RevitMCP' 탭 -^> [MCP 시작] 버튼 클릭
-echo    3. Claude Desktop 앱에서 Revit 자동화 시작!
-echo ============================================================
+echo   How to use:
+echo    1. Restart Revit
+echo    2. Click [Start MCP] in RevitMCP tab
+echo    3. Use Claude Desktop to automate Revit!
+echo  =====================================================
 echo.
+goto :END
+
+:: ── BUILD function ──────────────────────────────────────────────
+:BUILD
+set "VER=%1"
+echo.
+echo  ----- Building for Revit %VER% -----
+set "OUT=%ROOT%RevitMCP.Addin\bin\%VER%"
+set "DST=%APPDATA%\Autodesk\Revit\Addins\%VER%\RevitMCP"
+set "ADDIN_SRC=%ROOT%addin\RevitMCP.%VER%.addin"
+set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%VER%\RevitMCP.addin"
+
+dotnet build "%PROJ%" /p:RevitVersion=%VER% /p:Configuration=Release /p:OutputPath="%OUT%" --nologo
+if errorlevel 1 (
+    echo [ERROR] Build failed for Revit %VER%
+    goto :EOF
+)
+echo [OK] Build succeeded.
+
+if not exist "%DST%" mkdir "%DST%"
+xcopy /E /Y /Q "%OUT%\*" "%DST%\" >nul
+echo [OK] DLL copied to %DST%
+
+if not exist "%APPDATA%\Autodesk\Revit\Addins\%VER%" mkdir "%APPDATA%\Autodesk\Revit\Addins\%VER%"
+copy /Y "%ADDIN_SRC%" "%ADDIN_DST%" >nul
+echo [OK] Addin registered: %ADDIN_DST%
+goto :EOF
+
+:: ── Write JScript to temp file ──────────────────────────────────
+:WRITE_JS
+set "CFG=%APPDATA%\Claude\claude_desktop_config.json"
+set "CFG_JS=%CFG:\=\\%"
+set "CFGDIR=%APPDATA%\Claude"
+if not exist "%CFGDIR%" mkdir "%CFGDIR%"
+
+> "%TEMP%\revitmcp_cfg.js" (
+    echo var fs = new ActiveXObject^("Scripting.FileSystemObject"^);
+    echo var p = "%CFG_JS%";
+    echo var cfg = {};
+    echo if ^(fs.FileExists^(p^)^) {
+    echo   try {
+    echo     var f = fs.OpenTextFile^(p,1,false,-1^);
+    echo     var r = f.ReadAll^(^); f.Close^(^);
+    echo     if ^(r.replace^(/\s/g,""^) != ""^) cfg = eval^("^("+r+"^)"^);
+    echo   } catch^(e^){}
+    echo }
+    echo if ^(!cfg.mcpServers^) cfg.mcpServers={};
+    echo cfg.mcpServers["revit-mcp"]={transport:"http",url:"http://localhost:9876/"};
+    echo var j=JSON.stringify^(cfg,null,2^);
+    echo var fw=fs.CreateTextFile^(p,true,true^);
+    echo fw.Write^(j^); fw.Close^(^);
+    echo WScript.Echo^("[OK] Claude Desktop MCP registered: %CFG_JS%"^);
+)
+goto :EOF
 
 :END
 pause
