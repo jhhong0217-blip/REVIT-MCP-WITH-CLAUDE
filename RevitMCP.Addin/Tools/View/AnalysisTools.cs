@@ -184,45 +184,4 @@ namespace RevitMCP.Addin.Tools.View
         }
     }
 
-    public class RunDynamo : ToolBase
-    {
-        public override string Name => "run_dynamo_script";
-        public override string Description => "Dynamo .dyn 스크립트를 배치 실행합니다.";
-
-        public override JObject GetSchema() => new JObject
-        {
-            ["name"] = Name,
-            ["description"] = Description,
-            ["inputSchema"] = new JObject
-            {
-                ["type"] = "object",
-                ["required"] = new JArray { "scriptPath" },
-                ["properties"] = new JObject
-                {
-                    ["scriptPath"] = new JObject { ["type"] = "string", ["description"] = ".dyn 파일 전체 경로" }
-                }
-            }
-        };
-
-        public override JToken Execute(Document doc, JObject args)
-        {
-            var path = args["scriptPath"]!.ToString();
-            if (!System.IO.File.Exists(path))
-                return ErrorContent($"스크립트 파일 없음: {path}");
-
-            // Dynamo 배치 실행 — Revit 버전별 API가 상이하므로 Revit.IFC 패턴 사용
-            try
-            {
-                var dynType = System.Type.GetType("Dynamo.Applications.DynamoRevit, DynamoRevitDS");
-                if (dynType == null) return ErrorContent("Dynamo가 설치되지 않았습니다.");
-
-                // DynamoRevit BatchRun은 버전별 구현 필요 — 기본 메시지 반환
-                return TextContent($"Dynamo 스크립트 실행 요청: {path}\n(실제 실행은 Dynamo API 연동이 필요합니다)");
-            }
-            catch (System.Exception ex)
-            {
-                return ErrorContent($"Dynamo 실행 실패: {ex.Message}");
-            }
-        }
-    }
 }

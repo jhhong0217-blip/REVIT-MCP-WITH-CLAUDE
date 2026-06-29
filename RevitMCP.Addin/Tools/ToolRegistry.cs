@@ -7,6 +7,7 @@ using RevitMCP.Addin.Tools.Parameter;
 using RevitMCP.Addin.Tools.Family;
 using RevitMCP.Addin.Tools.Workset;
 using RevitMCP.Addin.Tools.Automation;
+using RevitMCP.Addin.Tools.Dynamo;
 using System.Collections.Generic;
 
 namespace RevitMCP.Addin.Tools
@@ -60,7 +61,14 @@ namespace RevitMCP.Addin.Tools
                 new GetWarningsTool(),
                 new GetWarningsDetailTool(),       // 경고 유형 분류 + 해소 제안
                 new MaterialTakeoffTool(),
-                new RunDynamo(),
+
+                // ── Dynamo 연동 ──────────────────────────────────────
+                new GetDynamoStatusTool(),         // Dynamo 설치/로드 상태 확인
+                new ListDynamoScriptsTool(),       // .dyn 스크립트 목록
+                new RunDynamoScriptTool(),         // 스크립트 실행 (API 직접 호출)
+                new RunDynamoPlayerTool(),         // Player 방식 실행 (입력값 설정)
+                new GetDynamoScriptInfoTool(),     // .dyn 파일 구조 분석
+                new CreateDynamoScriptTool(),      // 새 .dyn 파일 생성 (Python 포함)
 
                 // ── 오류/품질 체크 ───────────────────────────────
                 new FindUntaggedElementsTool(),    // 미태그 요소 탐지
