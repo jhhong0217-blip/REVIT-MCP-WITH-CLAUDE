@@ -1,10 +1,14 @@
+<# : # 더블클릭 시 PowerShell로 자동 재실행 (배치 트릭)
+@echo off & chcp 65001 > nul & powershell.exe -ExecutionPolicy Bypass -File "%~f0" %* & exit /b
+#>
 <#
 .SYNOPSIS
     RevitMCP 올인원 설치 스크립트
 .DESCRIPTION
     버전 선택 → 빌드 → Revit 애드인 설치 → Claude Desktop MCP 등록까지 한 번에 처리합니다.
+    더블클릭 또는 PowerShell에서 직접 실행 모두 지원합니다.
 .EXAMPLE
-    .\Setup.ps1
+    Setup.ps1 을 더블클릭
     .\Setup.ps1 -Version 2026 -Silent
 #>
 
