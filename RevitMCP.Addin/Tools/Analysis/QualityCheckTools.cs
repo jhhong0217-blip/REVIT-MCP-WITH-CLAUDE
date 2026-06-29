@@ -47,7 +47,7 @@ namespace RevitMCP.Addin.Tools.Analysis
                 .Where(e => !taggedIds.Contains(e.Id))
                 .Select(e => new JObject
                 {
-                    ["id"]       = e.Id.IntegerValue,
+                    ["id"]       = e.Id.Value,
                     ["name"]     = e.Name,
                     ["category"] = e.Category?.Name ?? ""
                 }).ToList();
@@ -102,7 +102,7 @@ namespace RevitMCP.Addin.Tools.Analysis
                 .Where(e => !dims.Contains(e.Id))
                 .Select(e => new JObject
                 {
-                    ["id"]       = e.Id.IntegerValue,
+                    ["id"]       = e.Id.Value,
                     ["name"]     = e.Name,
                     ["category"] = e.Category?.Name ?? ""
                 }).ToList();
@@ -316,7 +316,7 @@ namespace RevitMCP.Addin.Tools.Analysis
             using var tx = new Transaction(doc, "MCP: 뷰 필터 생성");
             tx.Start();
 
-            var rule = ParameterFilterRuleFactory.CreateEqualsRule(param.Id, paramVal, false);
+            var rule = ParameterFilterRuleFactory.CreateEqualsRule(param.Id, paramVal);
             var filter = ParameterFilterElement.Create(doc, args["filterName"]!.ToString(), catIds,
                 new ElementParameterFilter(rule));
 
@@ -334,7 +334,7 @@ namespace RevitMCP.Addin.Tools.Analysis
             }
 
             tx.Commit();
-            return TextContent($"뷰 필터 '{args["filterName"]}' 생성 및 적용 완료 (ID: {filter.Id.IntegerValue})");
+            return TextContent($"뷰 필터 '{args["filterName"]}' 생성 및 적용 완료 (ID: {filter.Id.Value})");
         }
     }
 
@@ -418,7 +418,7 @@ namespace RevitMCP.Addin.Tools.Analysis
                 newView.Name = n.ToString();
             tx.Commit();
 
-            return TextContent($"뷰 복제 완료 (ID: {newId.IntegerValue}, 이름: {newView?.Name})");
+            return TextContent($"뷰 복제 완료 (ID: {newId.Value}, 이름: {newView?.Name})");
         }
     }
 }

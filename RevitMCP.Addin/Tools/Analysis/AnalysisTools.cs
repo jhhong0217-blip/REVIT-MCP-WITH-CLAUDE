@@ -96,9 +96,9 @@ namespace RevitMCP.Addin.Tools.Analysis
                 {
                     clashes.Add(new JObject
                     {
-                        ["element1Id"] = e1.Id.IntegerValue,
+                        ["element1Id"] = e1.Id.Value,
                         ["element1Name"] = e1.Name,
-                        ["element2Id"] = e2.Id.IntegerValue,
+                        ["element2Id"] = e2.Id.Value,
                         ["element2Name"] = e2.Name
                     });
                 }
@@ -127,7 +127,7 @@ namespace RevitMCP.Addin.Tools.Analysis
                 {
                     ["description"] = w.GetDescriptionText(),
                     ["severity"] = w.GetSeverity().ToString(),
-                    ["elementIds"] = new JArray(w.GetFailingElements().Select(id => id.IntegerValue))
+                    ["elementIds"] = new JArray(w.GetFailingElements().Select(id => id.Value))
                 })
                 .ToList();
 

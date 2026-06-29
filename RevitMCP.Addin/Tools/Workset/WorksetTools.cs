@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace RevitMCP.Addin.Tools.Workset
 {
-    // ── 작업세트 목록 ─────────────────────────────────────────────
     public class GetWorksetsTool : ToolBase
     {
         public override string Name => "get_worksets";
@@ -25,18 +24,17 @@ namespace RevitMCP.Addin.Tools.Workset
                 .OfKind(WorksetKind.UserWorkset)
                 .Select(w => new JObject
                 {
-                    ["id"]        = w.Id.IntegerValue,
-                    ["name"]      = w.Name,
-                    ["isOpen"]    = w.IsOpen,
+                    ["id"]         = (long)w.Id.IntegerValue,
+                    ["name"]       = w.Name,
+                    ["isOpen"]     = w.IsOpen,
                     ["isEditable"] = w.IsEditable,
-                    ["owner"]     = w.Owner
+                    ["owner"]      = w.Owner
                 }).ToList();
 
             return TextContent($"작업세트 {worksets.Count}개\n{new JArray(worksets)}");
         }
     }
 
-    // ── 작업세트 생성 ─────────────────────────────────────────────
     public class CreateWorksetTool : ToolBase
     {
         public override string Name => "create_workset";
@@ -70,7 +68,6 @@ namespace RevitMCP.Addin.Tools.Workset
         }
     }
 
-    // ── 요소 작업세트 변경 ────────────────────────────────────────
     public class SetElementWorksetTool : ToolBase
     {
         public override string Name => "set_element_workset";
@@ -108,7 +105,7 @@ namespace RevitMCP.Addin.Tools.Workset
             tx.Start();
             foreach (var id in ids)
             {
-                var elem = doc.GetElement(new ElementId(id));
+                var elem = doc.GetElement(new ElementId((long)id));
                 var wsParam = elem?.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM);
                 if (wsParam != null && !wsParam.IsReadOnly)
                 {
@@ -122,7 +119,6 @@ namespace RevitMCP.Addin.Tools.Workset
         }
     }
 
-    // ── 카테고리별 작업세트 일괄 배정 ────────────────────────────
     public class AssignWorksetByCategoryTool : ToolBase
     {
         public override string Name => "assign_workset_by_category";

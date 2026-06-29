@@ -179,7 +179,7 @@ namespace RevitMCP.Addin.Tools.Params
                 })
                 .Select(e => new JObject
                 {
-                    ["id"] = e.Id.IntegerValue,
+                    ["id"] = e.Id.Value,
                     ["name"] = e.Name,
                     ["category"] = e.Category?.Name ?? ""
                 })
@@ -247,7 +247,7 @@ namespace RevitMCP.Addin.Tools.Params
                     var v = p?.AsValueString() ?? p?.AsString() ?? "";
                     return $"\"{v.Replace("\"", "\"\"")}\"";
                 });
-                sw.WriteLine($"{elem.Id.IntegerValue},{elem.Name},{string.Join(",", values)}");
+                sw.WriteLine($"{elem.Id.Value},{elem.Name},{string.Join(",", values)}");
             }
 
             return TextContent($"{elements.Count}개 요소를 '{outputPath}'에 내보냄");

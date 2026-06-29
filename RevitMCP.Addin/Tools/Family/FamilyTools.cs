@@ -34,7 +34,7 @@ namespace RevitMCP.Addin.Tools.Families
 
             var result = collector.Select(f => new JObject
             {
-                ["familyId"]   = f.Id.IntegerValue,
+                ["familyId"]   = f.Id.Value,
                 ["familyName"] = f.Name,
                 ["category"]   = f.FamilyCategory?.Name ?? "",
                 ["types"]      = new JArray(f.GetFamilySymbolIds()
@@ -42,7 +42,7 @@ namespace RevitMCP.Addin.Tools.Families
                     .Where(s => s != null)
                     .Select(s => new JObject
                     {
-                        ["typeId"]   = s!.Id.IntegerValue,
+                        ["typeId"]   = s!.Id.Value,
                         ["typeName"] = s.Name
                     }))
             }).ToList();
@@ -83,7 +83,7 @@ namespace RevitMCP.Addin.Tools.Families
             tx.Commit();
 
             if (family == null) return ErrorContent("패밀리 로드 실패 (이미 로드됐거나 호환되지 않음)");
-            return TextContent($"패밀리 '{family.Name}' 로드 완료 (ID: {family.Id.IntegerValue})");
+            return TextContent($"패밀리 '{family.Name}' 로드 완료 (ID: {family.Id.Value})");
         }
     }
 

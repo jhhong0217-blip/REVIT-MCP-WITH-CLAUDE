@@ -60,7 +60,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             var wall = Wall.Create(doc, Line.CreateBound(p1, p2), wallType.Id, level.Id, height, 0, false, false);
             tx.Commit();
 
-            return TextContent($"벽 생성 완료 (ID: {wall.Id.IntegerValue})");
+            return TextContent($"벽 생성 완료 (ID: {wall.Id.Value})");
         }
     }
 
@@ -130,7 +130,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             var floor = Floor.Create(doc, new System.Collections.Generic.List<CurveLoop> { loop }, floorType.Id, level.Id);
             tx.Commit();
 
-            return TextContent($"바닥 생성 완료 (ID: {floor.Id.IntegerValue})");
+            return TextContent($"바닥 생성 완료 (ID: {floor.Id.Value})");
         }
     }
 
@@ -178,7 +178,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             if (args["number"] is JToken rnum) room.Number = rnum.ToString();
             tx.Commit();
 
-            return TextContent($"룸 생성 완료 (ID: {room.Id.IntegerValue}, 이름: {room.Name})");
+            return TextContent($"룸 생성 완료 (ID: {room.Id.Value}, 이름: {room.Name})");
         }
     }
 
@@ -218,7 +218,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             if (args["name"] is JToken n) grid.Name = n.ToString();
             tx.Commit();
 
-            return TextContent($"그리드 생성 완료 (ID: {grid.Id.IntegerValue}, 이름: {grid.Name})");
+            return TextContent($"그리드 생성 완료 (ID: {grid.Id.Value}, 이름: {grid.Name})");
         }
     }
 
@@ -254,7 +254,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             level.Name = name;
             tx.Commit();
 
-            return TextContent($"레벨 생성 완료 (ID: {level.Id.IntegerValue}, 높이: {args["elevation"]}mm)");
+            return TextContent($"레벨 생성 완료 (ID: {level.Id.Value}, 높이: {args["elevation"]}mm)");
         }
     }
 
@@ -316,7 +316,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             }
             tx.Commit();
 
-            return TextContent($"패밀리 배치 완료 (ID: {inst.Id.IntegerValue})");
+            return TextContent($"패밀리 배치 완료 (ID: {inst.Id.Value})");
         }
     }
 
@@ -354,7 +354,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             tx.Start();
             ElementTransformUtils.MoveElement(doc, id, v);
             tx.Commit();
-            return TextContent($"요소 {id.IntegerValue} 이동 완료");
+            return TextContent($"요소 {id.Value} 이동 완료");
         }
     }
 
@@ -392,7 +392,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             tx.Start();
             var copied = ElementTransformUtils.CopyElement(doc, id, v);
             tx.Commit();
-            return TextContent($"복사 완료 → ID: {string.Join(", ", System.Linq.Enumerable.Select(copied, i => i.IntegerValue))}");
+            return TextContent($"복사 완료 → ID: {string.Join(", ", System.Linq.Enumerable.Select(copied, i => i.Value))}");
         }
     }
 

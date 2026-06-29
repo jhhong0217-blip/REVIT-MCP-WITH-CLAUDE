@@ -53,7 +53,7 @@ namespace RevitMCP.Addin.Tools.Docs
             sheet.Name = sheetName;
             tx.Commit();
 
-            return TextContent($"시트 생성 완료 (ID: {sheet.Id.IntegerValue}, 번호: {sheetNum})");
+            return TextContent($"시트 생성 완료 (ID: {sheet.Id.Value}, 번호: {sheetNum})");
         }
     }
 
@@ -91,7 +91,7 @@ namespace RevitMCP.Addin.Tools.Docs
 
             var level = new FilteredElementCollector(doc)
                 .OfClass(typeof(Level)).Cast<Level>()
-                .FirstOrDefault(l => l.Name == levelRef || l.Id.IntegerValue.ToString() == levelRef)
+                .FirstOrDefault(l => l.Name == levelRef || l.Id.Value.ToString() == levelRef)
                 ?? throw new System.Exception($"레벨 '{levelRef}' 없음");
 
             var vft = new FilteredElementCollector(doc)
@@ -113,7 +113,7 @@ namespace RevitMCP.Addin.Tools.Docs
                 view.Name = vn.ToString();
             tx.Commit();
 
-            return TextContent($"뷰 생성 완료 (ID: {view.Id.IntegerValue}, 이름: {view.Name})");
+            return TextContent($"뷰 생성 완료 (ID: {view.Id.Value}, 이름: {view.Name})");
         }
     }
 
@@ -151,7 +151,7 @@ namespace RevitMCP.Addin.Tools.Docs
             tx.Start();
             var vp = Viewport.Create(doc, sheetId, viewId, pt);
             tx.Commit();
-            return TextContent($"뷰포트 배치 완료 (ID: {vp.Id.IntegerValue})");
+            return TextContent($"뷰포트 배치 완료 (ID: {vp.Id.Value})");
         }
     }
 
@@ -203,7 +203,7 @@ namespace RevitMCP.Addin.Tools.Docs
             }
             tx.Commit();
 
-            return TextContent($"일람표 생성 완료 (ID: {schedule.Id.IntegerValue})");
+            return TextContent($"일람표 생성 완료 (ID: {schedule.Id.Value})");
         }
     }
 
@@ -295,7 +295,7 @@ namespace RevitMCP.Addin.Tools.Docs
             if (args["revisionDate"] is JToken rd) rev.RevisionDate = rd.ToString();
             if (args["issuedBy"] is JToken ib) rev.IssuedBy = ib.ToString();
             tx.Commit();
-            return TextContent($"개정 추가 완료 (ID: {rev.Id.IntegerValue})");
+            return TextContent($"개정 추가 완료 (ID: {rev.Id.Value})");
         }
     }
 
@@ -337,7 +337,7 @@ namespace RevitMCP.Addin.Tools.Docs
             tx.Start();
             var tn = TextNote.Create(doc, viewId, pt, width, args["text"]!.ToString(), tnt.Id);
             tx.Commit();
-            return TextContent($"텍스트 주석 생성 완료 (ID: {tn.Id.IntegerValue})");
+            return TextContent($"텍스트 주석 생성 완료 (ID: {tn.Id.Value})");
         }
     }
 
@@ -377,7 +377,7 @@ namespace RevitMCP.Addin.Tools.Docs
             tx.Start();
             var tag = IndependentTag.Create(doc, viewId, new Reference(elem), addLeader, TagMode.TM_ADDBY_CATEGORY, TagOrientation.Horizontal, center);
             tx.Commit();
-            return TextContent($"태그 추가 완료 (ID: {tag.Id.IntegerValue})");
+            return TextContent($"태그 추가 완료 (ID: {tag.Id.Value})");
         }
     }
 }

@@ -343,7 +343,7 @@ namespace RevitMCP.Addin.Tools.Automation
                     ["count"]       = g.Count(),
                     ["severity"]    = g.First().GetSeverity().ToString(),
                     ["elementIds"]  = new JArray(g.SelectMany(w =>
-                        w.GetFailingElements().Select(id => id.IntegerValue)).Distinct().Take(10)),
+                        w.GetFailingElements().Select(id => id.Value)).Distinct().Take(10)),
                     ["suggestion"]  = GetSuggestion(g.Key)
                 }).ToList();
 

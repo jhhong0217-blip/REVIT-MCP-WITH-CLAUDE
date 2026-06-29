@@ -59,7 +59,7 @@ namespace RevitMCP.Addin.Tools.Elements
 
             var result = elements.Take(limit).Select(e => new JObject
             {
-                ["id"] = e.Id.IntegerValue,
+                ["id"] = e.Id.Value,
                 ["name"] = e.Name,
                 ["category"] = e.Category?.Name ?? "",
                 ["typeName"] = doc.GetElement(e.GetTypeId())?.Name ?? ""
