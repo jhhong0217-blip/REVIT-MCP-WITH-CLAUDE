@@ -43,7 +43,7 @@
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 61개
+## 제공 도구 (MCP Tools) — 총 55개
 
 ### 요소 조회 / 조작
 | 도구 | 설명 |
@@ -139,15 +139,6 @@
 | `material_takeoff` | 재료 물량 산출 |
 | `room_data_summary` | 룸 면적·둘레·레벨 전체 요약 |
 
-### Dynamo 연동
-| 도구 | 설명 |
-|------|------|
-| `get_dynamo_status` | Dynamo 설치 여부·버전·로드 상태 확인 |
-| `list_dynamo_scripts` | 폴더의 .dyn 스크립트 목록 조회 |
-| `get_dynamo_script_info` | .dyn 파일 구조 분석 (입력/출력 노드, Python 코드 미리보기) |
-| `run_dynamo_script` | Dynamo API를 직접 호출해 스크립트 실행 |
-| `run_dynamo_player` | Dynamo Player 방식으로 실행 (입력 노드 값 사전 설정) |
-| `create_dynamo_script` | Python 코드로 새 .dyn 파일 생성 (Claude가 코드 작성) |
 
 ---
 
