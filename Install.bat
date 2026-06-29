@@ -18,7 +18,8 @@ if errorlevel 1 (
     echo         https://dotnet.microsoft.com/download
     goto :END
 )
-echo [OK] .NET SDK found.
+for /f "tokens=*" %%v in ('dotnet --version 2^>nul') do set "SDKVER=%%v"
+echo [OK] .NET SDK %SDKVER%
 
 :: Detect Revit
 echo.
@@ -103,6 +104,33 @@ echo    1. Restart Revit
 echo    2. RevitMCP tab - click [Start MCP]
 echo    3. Use Claude Desktop to automate Revit!
 echo  =====================================================
+goto :END
+
+:: ── BUILD subroutine ─────────────────────────────────────────────
+:BUILD
+echo.
+echo  ----- Building Revit %1 -----
+set "OUT=%ROOT%RevitMCP.Addin\bin\%1"
+set "DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP"
+set "ADDIN_SRC=%ROOT%addin\RevitMCP.%1.addin"
+set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP.addin"
+
+dotnet build "%PROJ%" /p:RevitVersion=%1 /p:Configuration=Release /p:OutputPath="%OUT%"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Build failed for Revit %1
+    goto :EOF
+)
+echo [OK] Build succeeded.
+
+if not exist "%DST%" mkdir "%DST%"
+xcopy /E /Y /Q "%OUT%\*" "%DST%\" >nul
+echo [OK] DLL copied to %DST%
+
+if not exist "%APPDATA%\Autodesk\Revit\Addins\%1" mkdir "%APPDATA%\Autodesk\Revit\Addins\%1"
+copy /Y "%ADDIN_SRC%" "%ADDIN_DST%" >nul
+echo [OK] Addin registered: %ADDIN_DST%
+goto :EOF
 
 :END
 echo.
