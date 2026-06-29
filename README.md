@@ -22,11 +22,11 @@
 - [.NET SDK 4.8 이상](https://dotnet.microsoft.com/download) 설치
 - [Claude Desktop 앱](https://claude.ai/download) 설치
 
-### 설치 (Setup.ps1 한 번 실행으로 완료)
+### 설치 방법
 
-```powershell
-.\Setup.ps1
-```
+**`Install.bat` 파일을 더블클릭하면 자동으로 설치됩니다.**
+
+> Setup.ps1을 직접 실행하고 싶다면: 파일 우클릭 → **PowerShell로 실행**
 
 실행하면 아래가 자동으로 처리됩니다:
 
