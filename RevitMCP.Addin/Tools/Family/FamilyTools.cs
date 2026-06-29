@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.IO;
 
-namespace RevitMCP.Addin.Tools.Family
+namespace RevitMCP.Addin.Tools.Families
 {
     // ── 패밀리 목록 조회 ──────────────────────────────────────────
     public class ListFamiliesTool : ToolBase

@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitMCP.Addin.Tools.Family
+namespace RevitMCP.Addin.Tools.Families
 {
     // ── 패밀리 파라미터 목록 조회 ─────────────────────────────────
     public class GetFamilyParametersTool : ToolBase
@@ -37,15 +37,16 @@ namespace RevitMCP.Addin.Tools.Family
             var result = new JArray();
             foreach (FamilyParameter p in mgr.Parameters)
             {
+                var groupId = (p.Definition as InternalDefinition)?.GetGroupTypeId()?.TypeId ?? "";
                 result.Add(new JObject
                 {
-                    ["name"]         = p.Definition.Name,
-                    ["paramType"]    = p.Definition.ParameterType.ToString(),
-                    ["group"]        = p.Definition.ParameterGroup.ToString(),
-                    ["isInstance"]   = p.IsInstance,
-                    ["isShared"]     = p.IsShared,
-                    ["isReadOnly"]   = p.IsReadOnly,
-                    ["formula"]      = p.IsDeterminedByFormula ? mgr.GetFormula(p) ?? "" : ""
+                    ["name"]       = p.Definition.Name,
+                    ["paramType"]  = p.Definition.GetDataType().TypeId,
+                    ["group"]      = groupId,
+                    ["isInstance"] = p.IsInstance,
+                    ["isShared"]   = p.IsShared,
+                    ["isReadOnly"] = p.IsReadOnly,
+                    ["formula"]    = p.IsDeterminedByFormula ? p.Formula ?? "" : ""
                 });
             }
 
@@ -75,29 +76,20 @@ namespace RevitMCP.Addin.Tools.Family
                 ["required"] = new JArray { "familyName", "paramName", "paramType" },
                 ["properties"] = new JObject
                 {
-                    ["familyName"]  = new JObject { ["type"] = "string", ["description"] = "대상 패밀리 이름" },
-                    ["paramName"]   = new JObject { ["type"] = "string", ["description"] = "추가할 파라미터 이름" },
-                    ["paramType"]   = new JObject
+                    ["familyName"]   = new JObject { ["type"] = "string", ["description"] = "대상 패밀리 이름" },
+                    ["paramName"]    = new JObject { ["type"] = "string", ["description"] = "추가할 파라미터 이름" },
+                    ["paramType"]    = new JObject
                     {
                         ["type"] = "string",
                         ["description"] = "파라미터 유형",
-                        ["enum"] = new JArray
-                        {
-                            "Length", "Area", "Volume", "Angle", "Number",
-                            "Text", "Integer", "YesNo", "Material"
-                        }
+                        ["enum"] = new JArray { "Length", "Area", "Volume", "Angle", "Number", "Text", "Integer", "YesNo", "Material" }
                     },
-                    ["isInstance"]  = new JObject { ["type"] = "boolean", ["description"] = "true=인스턴스, false=타입 (기본 true)" },
-                    ["group"]       = new JObject
+                    ["isInstance"]   = new JObject { ["type"] = "boolean", ["description"] = "true=인스턴스, false=타입 (기본 true)" },
+                    ["group"]        = new JObject
                     {
                         ["type"] = "string",
-                        ["description"] = "파라미터 그룹 (기본 PG_DATA)",
-                        ["enum"] = new JArray
-                        {
-                            "PG_DATA", "PG_GEOMETRY", "PG_CONSTRAINTS",
-                            "PG_CONSTRUCTION", "PG_MATERIALS", "PG_IDENTITY_DATA",
-                            "PG_MECHANICAL", "PG_ELECTRICAL", "PG_STRUCTURAL"
-                        }
+                        ["description"] = "파라미터 그룹 (기본 Data)",
+                        ["enum"] = new JArray { "Data", "Geometry", "Constraints", "Construction", "Materials", "IdentityData", "Mechanical", "Electrical", "StructuralAnalysis" }
                     },
                     ["defaultValue"] = new JObject { ["type"] = "string", ["description"] = "기본값 (선택)" }
                 }
@@ -106,25 +98,19 @@ namespace RevitMCP.Addin.Tools.Family
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var familyName = args["familyName"]!.ToString();
-            var paramName  = args["paramName"]!.ToString();
+            var familyName   = args["familyName"]!.ToString();
+            var paramName    = args["paramName"]!.ToString();
             var paramTypeStr = args["paramType"]!.ToString();
-            var isInstance = args["isInstance"]?.ToObject<bool>() ?? true;
-            var groupStr   = args["group"]?.ToString() ?? "PG_DATA";
+            var isInstance   = args["isInstance"]?.ToObject<bool>() ?? true;
+            var groupStr     = args["group"]?.ToString() ?? "Data";
 
-            // ParameterType 파싱
-            if (!System.Enum.TryParse<ParameterType>(paramTypeStr, out var paramType))
-                return ErrorContent($"지원하지 않는 파라미터 유형: {paramTypeStr}");
-
-            // BuiltInParameterGroup 파싱
-            if (!System.Enum.TryParse<BuiltInParameterGroup>(groupStr, out var group))
-                group = BuiltInParameterGroup.PG_DATA;
+            var specTypeId  = GetSpecTypeId(paramTypeStr);
+            var groupTypeId = GetGroupTypeId(groupStr);
 
             var family = GetFamily(doc, familyName);
             var famDoc = doc.EditFamily(family);
             var mgr    = famDoc.FamilyManager;
 
-            // 이미 존재하는지 확인
             var existing = mgr.Parameters.Cast<FamilyParameter>()
                 .FirstOrDefault(p => p.Definition.Name == paramName);
             if (existing != null)
@@ -137,24 +123,20 @@ namespace RevitMCP.Addin.Tools.Family
             using (var tx = new Transaction(famDoc, "MCP: 패밀리 파라미터 추가"))
             {
                 tx.Start();
-                newParam = mgr.AddParameter(paramName, group, paramType, isInstance);
+                newParam = mgr.AddParameter(paramName, groupTypeId, specTypeId, isInstance);
 
-                // 기본값 설정
                 if (args["defaultValue"] is JToken dv && newParam != null)
                 {
-                    try { SetDefaultValue(mgr, newParam, dv.ToString(), paramType); }
-                    catch { /* 기본값 설정 실패는 무시 */ }
+                    try { SetDefaultValue(mgr, newParam, dv.ToString()); }
+                    catch { /* 기본값 설정 실패 무시 */ }
                 }
                 tx.Commit();
             }
 
-            // 저장 후 프로젝트에 재로드
-            var savePath = System.IO.Path.Combine(
-                System.IO.Path.GetTempPath(), $"{familyName}.rfa");
+            var savePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{familyName}.rfa");
             famDoc.SaveAs(savePath, new SaveAsOptions { OverwriteExistingFile = true });
             famDoc.Close(false);
 
-            // 프로젝트에 다시 로드
             using (var tx = new Transaction(doc, "MCP: 패밀리 재로드"))
             {
                 tx.Start();
@@ -171,24 +153,44 @@ namespace RevitMCP.Addin.Tools.Family
                 $"  그룹: {groupStr}");
         }
 
-        private static void SetDefaultValue(FamilyManager mgr, FamilyParameter param, string value, ParameterType pType)
+        private static ForgeTypeId GetSpecTypeId(string paramType) => paramType switch
         {
-            switch (pType)
+            "Length"   => SpecTypeId.Length,
+            "Area"     => SpecTypeId.Area,
+            "Volume"   => SpecTypeId.Volume,
+            "Angle"    => SpecTypeId.Angle,
+            "Number"   => SpecTypeId.Number,
+            "Text"     => SpecTypeId.String.Text,
+            "Integer"  => SpecTypeId.Int.Integer,
+            "YesNo"    => SpecTypeId.Boolean.YesNo,
+            "Material" => SpecTypeId.Reference.Material,
+            _          => SpecTypeId.Number
+        };
+
+        private static ForgeTypeId GetGroupTypeId(string group) => group switch
+        {
+            "Geometry"           => GroupTypeId.Geometry,
+            "Constraints"        => GroupTypeId.Constraints,
+            "Construction"       => GroupTypeId.Construction,
+            "Materials"          => GroupTypeId.Materials,
+            "IdentityData"       => GroupTypeId.IdentityData,
+            "Mechanical"         => GroupTypeId.Mechanical,
+            "Electrical"         => GroupTypeId.Electrical,
+            "StructuralAnalysis" => GroupTypeId.StructuralAnalysis,
+            _                    => GroupTypeId.Data
+        };
+
+        private static void SetDefaultValue(FamilyManager mgr, FamilyParameter param, string value)
+        {
+            switch (param.StorageType)
             {
-                case ParameterType.Length:
-                case ParameterType.Area:
-                case ParameterType.Volume:
-                case ParameterType.Number:
-                case ParameterType.Angle:
+                case StorageType.Double:
                     if (double.TryParse(value, out double d)) mgr.Set(param, d / 304.8);
                     break;
-                case ParameterType.Integer:
+                case StorageType.Integer:
                     if (int.TryParse(value, out int i)) mgr.Set(param, i);
                     break;
-                case ParameterType.YesNo:
-                    mgr.Set(param, value.ToLower() == "true" || value == "1" ? 1 : 0);
-                    break;
-                case ParameterType.Text:
+                case StorageType.String:
                     mgr.Set(param, value);
                     break;
             }
@@ -280,7 +282,7 @@ namespace RevitMCP.Addin.Tools.Family
                 {
                     ["familyName"] = new JObject { ["type"] = "string" },
                     ["paramName"]  = new JObject { ["type"] = "string" },
-                    ["formula"]    = new JObject { ["type"] = "string", ["description"] = "Revit 수식 (예: Width * 2, if(Height > 3000mm, 200mm, 100mm))" }
+                    ["formula"]    = new JObject { ["type"] = "string", ["description"] = "Revit 수식 (예: Width * 2)" }
                 }
             }
         };
@@ -342,9 +344,9 @@ namespace RevitMCP.Addin.Tools.Family
                 ["required"] = new JArray { "familyName", "typeName" },
                 ["properties"] = new JObject
                 {
-                    ["familyName"]  = new JObject { ["type"] = "string" },
-                    ["typeName"]    = new JObject { ["type"] = "string", ["description"] = "새 타입 이름" },
-                    ["parameters"]  = new JObject
+                    ["familyName"] = new JObject { ["type"] = "string" },
+                    ["typeName"]   = new JObject { ["type"] = "string", ["description"] = "새 타입 이름" },
+                    ["parameters"] = new JObject
                     {
                         ["type"] = "object",
                         ["description"] = "파라미터명: 값 딕셔너리",
@@ -370,24 +372,23 @@ namespace RevitMCP.Addin.Tools.Family
                 tx.Start();
                 mgr.NewType(typeName);
 
-                foreach (var (pName, pVal) in parameters)
+                foreach (var kvp in parameters)
                 {
                     var param = mgr.Parameters.Cast<FamilyParameter>()
-                        .FirstOrDefault(p => p.Definition.Name == pName);
+                        .FirstOrDefault(p => p.Definition.Name == kvp.Key);
                     if (param == null || param.IsDeterminedByFormula) continue;
                     try
                     {
                         switch (param.StorageType)
                         {
                             case StorageType.Double:
-                                if (double.TryParse(pVal, out double d))
-                                    mgr.Set(param, d / 304.8);
+                                if (double.TryParse(kvp.Value, out double d)) mgr.Set(param, d / 304.8);
                                 break;
                             case StorageType.Integer:
-                                if (int.TryParse(pVal, out int i)) mgr.Set(param, i);
+                                if (int.TryParse(kvp.Value, out int i)) mgr.Set(param, i);
                                 break;
                             case StorageType.String:
-                                mgr.Set(param, pVal);
+                                mgr.Set(param, kvp.Value);
                                 break;
                         }
                     }
@@ -407,9 +408,7 @@ namespace RevitMCP.Addin.Tools.Family
                 tx.Commit();
             }
 
-            return TextContent(
-                $"타입 '{typeName}' 추가 완료\n" +
-                $"  설정된 파라미터: {parameters.Count}개");
+            return TextContent($"타입 '{typeName}' 추가 완료\n  설정된 파라미터: {parameters.Count}개");
         }
 
         private static Family GetFamily(Document doc, string name) =>
@@ -426,6 +425,7 @@ namespace RevitMCP.Addin.Tools.Family
             overwriteParameterValues = true;
             return true;
         }
+
         public bool OnSharedFamilyFound(Family sharedFamily, bool familyInUse,
             out FamilySource source, out bool overwriteParameterValues)
         {

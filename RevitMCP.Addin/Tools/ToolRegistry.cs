@@ -1,10 +1,10 @@
 ﻿using Autodesk.Revit.UI;
-using RevitMCP.Addin.Tools.Element;
+using RevitMCP.Addin.Tools.Elements;
 using RevitMCP.Addin.Tools.Modeling;
-using RevitMCP.Addin.Tools.Document;
+using RevitMCP.Addin.Tools.Docs;
 using RevitMCP.Addin.Tools.Analysis;
-using RevitMCP.Addin.Tools.Parameter;
-using RevitMCP.Addin.Tools.Family;
+using RevitMCP.Addin.Tools.Params;
+using RevitMCP.Addin.Tools.Families;
 using RevitMCP.Addin.Tools.Workset;
 using RevitMCP.Addin.Tools.Automation;
 using System.Collections.Generic;

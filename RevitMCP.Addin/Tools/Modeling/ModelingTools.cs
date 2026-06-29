@@ -1,5 +1,6 @@
 using Autodesk.Revit.DB;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RevitMCP.Addin.Tools.Modeling
@@ -466,9 +467,10 @@ namespace RevitMCP.Addin.Tools.Modeling
 
             using var tx = new Transaction(doc, "MCP: 요소 미러");
             tx.Start();
-            var mirrored = ElementTransformUtils.MirrorElement(doc, id, plane);
+            var ids = new List<ElementId> { id };
+            ElementTransformUtils.MirrorElements(doc, ids, plane, true);
             tx.Commit();
-            return TextContent($"미러 완료 → ID: {string.Join(", ", System.Linq.Enumerable.Select(mirrored, i => i.IntegerValue))}");
+            return TextContent("미러 완료");
         }
     }
 
@@ -510,7 +512,7 @@ namespace RevitMCP.Addin.Tools.Modeling
             var c2 = (bb2.Min + bb2.Max) / 2;
 
             var refs = new ReferenceArray();
-            refs.Append(e1.GetGeneratingElementIds(doc) != null ? new Reference(e1) : new Reference(e1));
+            refs.Append(new Reference(e1));
             refs.Append(new Reference(e2));
 
             var line = Line.CreateBound(c1, c2);

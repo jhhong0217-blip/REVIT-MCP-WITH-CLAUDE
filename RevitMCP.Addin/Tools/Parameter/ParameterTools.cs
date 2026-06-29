@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
-namespace RevitMCP.Addin.Tools.Parameter
+namespace RevitMCP.Addin.Tools.Params
 {
     public class SetParameterTool : ToolBase
     {
@@ -104,17 +104,17 @@ namespace RevitMCP.Addin.Tools.Parameter
             {
                 var elem = doc.GetElement(new ElementId(id));
                 if (elem == null) continue;
-                foreach (var (pName, pVal) in parameters)
+                foreach (var kvp in parameters)
                 {
-                    var param = elem.LookupParameter(pName);
+                    var param = elem.LookupParameter(kvp.Key);
                     if (param == null || param.IsReadOnly) continue;
                     try
                     {
                         switch (param.StorageType)
                         {
-                            case StorageType.String: param.Set(pVal); break;
-                            case StorageType.Double: param.Set(double.Parse(pVal)); break;
-                            case StorageType.Integer: param.Set(int.Parse(pVal)); break;
+                            case StorageType.String: param.Set(kvp.Value); break;
+                            case StorageType.Double: param.Set(double.Parse(kvp.Value)); break;
+                            case StorageType.Integer: param.Set(int.Parse(kvp.Value)); break;
                         }
                         success++;
                     }

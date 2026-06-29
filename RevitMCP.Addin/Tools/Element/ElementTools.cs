@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitMCP.Addin.Tools.Element
+namespace RevitMCP.Addin.Tools.Elements
 {
     public class GetElementsTool : ToolBase
     {
@@ -174,7 +174,7 @@ namespace RevitMCP.Addin.Tools.Element
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var uiDoc = App.UiApp?.ActiveUIDocument;
+            var uiDoc = RevitMCP.Addin.Server.RevitEventDispatcher.CurrentApp?.ActiveUIDocument;
             if (uiDoc == null) return ErrorContent("활성 문서 없음");
 
             var ids = args["elementIds"]!.ToObject<int[]>()!

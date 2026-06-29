@@ -14,6 +14,8 @@ namespace RevitMCP.Addin.Server
         private static ExternalEvent? _event;
         private static Handler? _handler;
 
+        public static UIApplication? CurrentApp { get; private set; }
+
         public static void Initialize(UIApplication app)
         {
             _handler = new Handler();
@@ -37,6 +39,7 @@ namespace RevitMCP.Addin.Server
 
             public void Execute(UIApplication app)
             {
+                CurrentApp = app;
                 var doc = app.ActiveUIDocument?.Document;
                 if (doc == null) return;
 

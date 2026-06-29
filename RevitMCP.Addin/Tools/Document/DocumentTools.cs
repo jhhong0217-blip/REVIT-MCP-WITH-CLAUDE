@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitMCP.Addin.Tools.Document
+namespace RevitMCP.Addin.Tools.Docs
 {
     public class CreateSheetTool : ToolBase
     {
