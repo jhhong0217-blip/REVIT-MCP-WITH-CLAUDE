@@ -1,13 +1,14 @@
 # RevitMCP — AI 기반 Revit 자동화 플랫폼
 
-**Claude Desktop 앱**과 Revit을 연결하여 모델링 자동화, 도서 자동화, 충돌 검사 등을 AI로 처리할 수 있는 Revit Addin입니다.
+**Claude Desktop 앱**과 Revit을 연결하여 모델링 자동화, 도서 자동화, 충돌 검사, 패밀리 편집 등을 AI로 처리할 수 있는 Revit Addin입니다.
 
 ## 지원 버전
+
 | Revit | .NET | 상태 |
 |-------|------|------|
-| 2025 | 4.8 | ✅ 지원 |
-| 2026 | 4.8 | ✅ 지원 |
-| 2027 | 4.8 | ✅ 지원 |
+| 2025  | 4.8  | ✅ 지원 |
+| 2026  | 4.8  | ✅ 지원 |
+| 2027  | 4.8  | ✅ 지원 |
 
 > ⚠️ **Claude Desktop 전용입니다.** Claude Code(터미널)에서는 동작하지 않습니다.
 
@@ -16,6 +17,7 @@
 ## 설치 방법
 
 ### 사전 준비
+
 - [Revit 2025 / 2026 / 2027](https://www.autodesk.com/products/revit) 설치
 - [.NET SDK 4.8 이상](https://dotnet.microsoft.com/download) 설치
 - [Claude Desktop 앱](https://claude.ai/download) 설치
@@ -27,6 +29,7 @@
 ```
 
 실행하면 아래가 자동으로 처리됩니다:
+
 1. 설치된 Revit 버전 자동 감지
 2. 버전 선택 메뉴 표시
 3. Revit Addin 빌드 및 설치
@@ -46,6 +49,7 @@
 ## 제공 도구 (MCP Tools) — 총 55개
 
 ### 요소 조회 / 조작
+
 | 도구 | 설명 |
 |------|------|
 | `get_elements` | 카테고리·레벨 필터로 요소 목록 조회 |
@@ -55,6 +59,7 @@
 | `select_elements` | UI에서 요소 선택 |
 
 ### 모델링 자동화
+
 | 도구 | 설명 |
 |------|------|
 | `create_wall` | 두 점 사이 벽 생성 |
@@ -70,6 +75,7 @@
 | `create_dimension` | 치수선 생성 |
 
 ### 도서 자동화
+
 | 도구 | 설명 |
 |------|------|
 | `create_sheet` | 도면 시트 생성 |
@@ -87,6 +93,7 @@
 | `renumber_elements` | 요소 번호 자동 부여 |
 
 ### 파라미터 관리
+
 | 도구 | 설명 |
 |------|------|
 | `bulk_set_parameters` | 다중 요소 파라미터 일괄 설정 |
@@ -95,6 +102,7 @@
 | `import_parameters_from_csv` | CSV → Revit 파라미터 일괄 가져오기 |
 
 ### 오류 / 품질 체크
+
 | 도구 | 설명 |
 |------|------|
 | `get_warnings` | 모델 경고 목록 조회 |
@@ -104,6 +112,7 @@
 | `clash_detection` | 두 카테고리 간 충돌 감지 |
 
 ### 뷰 / 그래픽 관리
+
 | 도구 | 설명 |
 |------|------|
 | `create_view_filter` | 파라미터 조건 기반 뷰 필터 생성 |
@@ -112,6 +121,7 @@
 | `purge_unused` | 미사용 패밀리/타입 정리 |
 
 ### 패밀리 관리 / 파라미터 편집
+
 | 도구 | 설명 |
 |------|------|
 | `list_families` | 로드된 패밀리 전체 목록 조회 |
@@ -125,6 +135,7 @@
 | `add_family_type` | 패밀리에 새 타입 추가 및 파라미터 값 설정 |
 
 ### 작업세트 관리
+
 | 도구 | 설명 |
 |------|------|
 | `get_worksets` | 작업세트 목록 조회 |
@@ -133,12 +144,12 @@
 | `assign_workset_by_category` | 카테고리별 작업세트 일괄 배정 |
 
 ### 분석 / 물량
+
 | 도구 | 설명 |
 |------|------|
 | `get_model_info` | 프로젝트 전체 정보 조회 |
 | `material_takeoff` | 재료 물량 산출 |
 | `room_data_summary` | 룸 면적·둘레·레벨 전체 요약 |
-
 
 ---
 
@@ -156,9 +167,43 @@
 
 "구조 기둥과 덕트 충돌 검사해줘"
 → clash_detection(category1: "OST_StructuralColumns", category2: "OST_DuctCurves")
+
+"커튼월 패밀리에 Width 파라미터 추가해줘"
+→ add_family_parameter(familyName: "커튼월", paramName: "Width", paramType: "Length", isInstance: true)
 ```
 
 ---
+
+## 프로젝트 구조
+
+```
+revit-mcp/
+├── Setup.ps1                          # 단일 설치 스크립트
+├── addin/
+│   ├── RevitMCP.2025.addin
+│   ├── RevitMCP.2026.addin
+│   └── RevitMCP.2027.addin
+└── RevitMCP.Addin/
+    ├── App.cs                         # IExternalApplication (리본 버튼)
+    ├── Config.cs                      # 포트(9876) / 버전 설정
+    ├── Logger.cs                      # 로그 → %AppData%\RevitMCP\
+    ├── Commands/
+    │   └── ToggleMCPCommand.cs        # MCP 시작/중지 명령
+    ├── Server/
+    │   ├── MCPServer.cs               # HttpListener JSON-RPC 2.0 서버
+    │   └── RevitEventDispatcher.cs    # 메인 스레드 안전 실행
+    └── Tools/
+        ├── ToolBase.cs
+        ├── ToolRegistry.cs            # 55개 도구 등록
+        ├── Element/      ElementTools.cs
+        ├── Modeling/     ModelingTools.cs
+        ├── Document/     DocumentTools.cs
+        ├── Parameter/    ParameterTools.cs
+        ├── Family/       FamilyTools.cs, FamilyEditTools.cs
+        ├── Analysis/     AnalysisTools.cs, QualityCheckTools.cs
+        ├── Workset/      WorksetTools.cs
+        └── Automation/   AutomationTools.cs
+```
 
 ## 아키텍처
 
@@ -169,7 +214,7 @@ Claude Desktop 앱
 RevitMCP Server (localhost:9876)
 ┌─────────────────────────────┐
 │  MCPServer (HttpListener)   │
-│  ToolRegistry (30개 도구)   │
+│  ToolRegistry (55개 도구)   │
 │  RevitEventDispatcher       │ ←─ Revit 메인 스레드 위임
 └─────────────────────────────┘
        │ ExternalEvent
@@ -178,4 +223,5 @@ Revit API (메인 스레드)
 ```
 
 ## 로그 위치
+
 `%AppData%\RevitMCP\revit-mcp.log`
