@@ -4,6 +4,7 @@ chcp 437 > nul
 
 set "ROOT=%~dp0"
 set "PROJ=%ROOT%RevitMCP.Addin\RevitMCP.Addin.csproj"
+set "DOTNET=%ProgramFiles%\dotnet\dotnet.exe"
 
 echo.
 echo  =====================================================
@@ -12,30 +13,32 @@ echo  =====================================================
 echo.
 
 :: ── .NET SDK check / auto install ────────────────────────────────
-where dotnet >nul 2>&1
-if errorlevel 1 (
+set "SDK_OK=0"
+"%DOTNET%" --version >nul 2>&1
+if not errorlevel 1 set "SDK_OK=1"
+
+if "%SDK_OK%"=="0" (
     echo [INFO] .NET SDK not found. Downloading...
-    echo        This may take a few minutes. Please wait.
+    echo        (~200MB - please wait)
     echo.
     curl -L -o "%TEMP%\dotnet-sdk-installer.exe" "https://aka.ms/dotnet/8.0/dotnet-sdk-win-x64.exe"
     if errorlevel 1 (
         echo [ERROR] Download failed. Check internet connection.
         goto :END
     )
-    echo [INFO] Installing .NET SDK...
+    echo [INFO] Installing .NET SDK (run as Administrator if this fails)...
     "%TEMP%\dotnet-sdk-installer.exe" /install /quiet /norestart
     if errorlevel 1 (
-        echo [ERROR] Install failed. Try running as Administrator.
+        echo [ERROR] Install failed. Right-click Install.bat and choose "Run as administrator".
         del "%TEMP%\dotnet-sdk-installer.exe" >nul 2>&1
         goto :END
     )
     del "%TEMP%\dotnet-sdk-installer.exe" >nul 2>&1
-    set "PATH=%PATH%;%ProgramFiles%\dotnet"
     echo [OK] .NET SDK installed.
     echo.
 )
 
-for /f "tokens=*" %%v in ('dotnet --version 2^>nul') do set "SDKVER=%%v"
+for /f "tokens=*" %%v in ('"%DOTNET%" --version 2^>nul') do set "SDKVER=%%v"
 echo [OK] .NET SDK %SDKVER%
 
 :: ── Detect Revit ─────────────────────────────────────────────────
@@ -98,19 +101,19 @@ echo [INFO] Registering Claude Desktop MCP...
 set "CFGDIR=%APPDATA%\Claude"
 set "CFG=%CFGDIR%\claude_desktop_config.json"
 if not exist "%CFGDIR%" mkdir "%CFGDIR%"
-if not exist "%CFG%" echo {} > "%CFG%"
 
-set "JSF=%TEMP%\mcp_reg.js"
-echo var fs=new ActiveXObject("Scripting.FileSystemObject"); > "%JSF%"
-echo var p="%CFG:\=\\%"; >> "%JSF%"
-echo var cfg={}; >> "%JSF%"
-echo try{var f=fs.OpenTextFile(p,1,false,-1);var r=f.ReadAll();f.Close();if(r.trim()!="")cfg=JSON.parse(r);}catch(e){} >> "%JSF%"
-echo if(!cfg.mcpServers)cfg.mcpServers={}; >> "%JSF%"
-echo cfg.mcpServers["revit-mcp"]={transport:"http",url:"http://localhost:9876/"}; >> "%JSF%"
-echo var fw=fs.CreateTextFile(p,true,true);fw.Write(JSON.stringify(cfg,null,2));fw.Close(); >> "%JSF%"
-echo WScript.Echo("[OK] Claude Desktop MCP registered."); >> "%JSF%"
-cscript //nologo "%JSF%"
-del "%JSF%" >nul 2>&1
+(
+echo {
+echo   "mcpServers": {
+echo     "revit-mcp": {
+echo       "transport": "http",
+echo       "url": "http://localhost:9876/"
+echo     }
+echo   }
+echo }
+) > "%CFG%"
+
+echo [OK] Claude Desktop MCP registered.
 
 echo.
 echo  =====================================================
@@ -130,7 +133,7 @@ set "DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP"
 set "ADDIN_SRC=%ROOT%addin\RevitMCP.%1.addin"
 set "ADDIN_DST=%APPDATA%\Autodesk\Revit\Addins\%1\RevitMCP.addin"
 
-dotnet build "%PROJ%" /p:RevitVersion=%1 /p:Configuration=Release /p:OutputPath="%OUT%"
+"%DOTNET%" build "%PROJ%" /p:RevitVersion=%1 /p:Configuration=Release /p:OutputPath="%OUT%"
 if errorlevel 1 (
     echo [ERROR] Build failed for Revit %1
     goto :EOF
