@@ -98,14 +98,14 @@ namespace RevitMCP.Addin.Tools.Workset
                 .FirstOrDefault(w => w.Name == wsName)
                 ?? throw new System.Exception($"작업세트 '{wsName}' 없음");
 
-            var ids = args["elementIds"]!.ToObject<int[]>()!;
+            var ids = args["elementIds"]!.ToObject<long[]>()!;
             int success = 0;
 
             using var tx = new Transaction(doc, "MCP: 작업세트 변경");
             tx.Start();
             foreach (var id in ids)
             {
-                var elem = doc.GetElement(new ElementId((long)id));
+                var elem = doc.GetElement(new ElementId(id));
                 var wsParam = elem?.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM);
                 if (wsParam != null && !wsParam.IsReadOnly)
                 {

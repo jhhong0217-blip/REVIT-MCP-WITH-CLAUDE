@@ -144,8 +144,8 @@ namespace RevitMCP.Addin.Tools.Docs
         public override JToken Execute(Document doc, JObject args)
         {
             double MmToFt(double mm) => mm / 304.8;
-            var sheetId = new ElementId(args["sheetId"]!.ToObject<int>());
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var sheetId = new ElementId(args["sheetId"]!.ToObject<long>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var pt = new XYZ(MmToFt(args["x"]!.ToObject<double>()), MmToFt(args["y"]!.ToObject<double>()), 0);
 
             using var tx = new Transaction(doc, "MCP: 뷰포트 배치");
@@ -242,7 +242,7 @@ namespace RevitMCP.Addin.Tools.Docs
             IEnumerable<ViewSheet> sheets;
             if (args["sheetIds"] is JArray ids && ids.Count > 0)
             {
-                sheets = ids.Select(i => doc.GetElement(new ElementId(i.ToObject<int>())) as ViewSheet)
+                sheets = ids.Select(i => doc.GetElement(new ElementId(i.ToObject<long>())) as ViewSheet)
                             .Where(s => s != null)!;
             }
             else
@@ -327,7 +327,7 @@ namespace RevitMCP.Addin.Tools.Docs
         public override JToken Execute(Document doc, JObject args)
         {
             double MmToFt(double mm) => mm / 304.8;
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
             var pt = new XYZ(MmToFt(args["x"]!.ToObject<double>()), MmToFt(args["y"]!.ToObject<double>()), 0);
             var width = MmToFt(args["width"]?.ToObject<double>() ?? 500);
@@ -366,8 +366,8 @@ namespace RevitMCP.Addin.Tools.Docs
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var elemId = new ElementId(args["elementId"]!.ToObject<int>());
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var elemId = new ElementId(args["elementId"]!.ToObject<long>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
             var elem = doc.GetElement(elemId);
             var bb = elem.get_BoundingBox(view);
@@ -405,6 +405,7 @@ namespace RevitMCP.Addin.Tools.Docs
         public override JToken Execute(Document doc, JObject args)
         {
             var name = args["viewName"]?.ToString() ?? throw new System.Exception("viewName 필수");
+
             var view = new FilteredElementCollector(doc)
                 .OfClass(typeof(View))
                 .Cast<View>()
@@ -415,9 +416,11 @@ namespace RevitMCP.Addin.Tools.Docs
 
             var uiApp = Server.RevitEventDispatcher.CurrentApp
                 ?? throw new System.Exception("UIApplication 없음");
-            uiApp.ActiveUIDocument.ActiveView = view;
 
-            return TextContent($"뷰 전환 완료: {view.Name} (ID: {view.Id.Value})");
+            // ActiveView 직접 대입은 Revit 2023+ ExternalEvent에서 예외 발생 → RequestViewChange 사용
+            uiApp.ActiveUIDocument.RequestViewChange(view);
+
+            return TextContent($"뷰 전환 완료: {view.Name} (ID: {view.Id.Value}, 타입: {view.ViewType})");
         }
     }
 

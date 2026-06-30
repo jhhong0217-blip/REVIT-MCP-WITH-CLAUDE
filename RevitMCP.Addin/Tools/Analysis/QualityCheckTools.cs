@@ -32,7 +32,7 @@ namespace RevitMCP.Addin.Tools.Analysis
             if (!System.Enum.TryParse<BuiltInCategory>(args["category"]!.ToString(), out var bic))
                 return ErrorContent("잘못된 카테고리");
 
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
 
             var elements = new FilteredElementCollector(doc, viewId)
                 .OfCategory(bic).WhereElementIsNotElementType().ToList();
@@ -80,7 +80,7 @@ namespace RevitMCP.Addin.Tools.Analysis
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
 
             var dims = new FilteredElementCollector(doc, viewId)
                 .OfClass(typeof(Dimension)).Cast<Dimension>()
@@ -138,9 +138,9 @@ namespace RevitMCP.Addin.Tools.Analysis
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view   = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
-            var ids    = args["elementIds"]!.ToObject<int[]>()!.Select(i => new ElementId(i)).ToList();
+            var ids    = args["elementIds"]!.ToObject<long[]>()!.Select(i => new ElementId(i)).ToList();
             int r = args["r"]?.ToObject<int>() ?? 255;
             int g = args["g"]?.ToObject<int>() ?? 0;
             int b = args["b"]?.ToObject<int>() ?? 0;
@@ -231,9 +231,9 @@ namespace RevitMCP.Addin.Tools.Analysis
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view   = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
-            var ids    = args["elementIds"]!.ToObject<int[]>()!.Select(i => new ElementId(i)).ToList();
+            var ids    = args["elementIds"]!.ToObject<long[]>()!.Select(i => new ElementId(i)).ToList();
             var reset  = args["reset"]?.ToObject<bool>() ?? false;
 
             using var tx = new Transaction(doc, "MCP: 그래픽 재지정");
@@ -362,7 +362,7 @@ namespace RevitMCP.Addin.Tools.Analysis
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view   = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
             var tmplName = args["templateName"]!.ToString();
 
@@ -405,7 +405,7 @@ namespace RevitMCP.Addin.Tools.Analysis
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view   = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
             var withDetail = args["withDetailing"]?.ToObject<bool>() ?? false;
             var mode = withDetail ? ViewDuplicateOption.WithDetailing : ViewDuplicateOption.Duplicate;

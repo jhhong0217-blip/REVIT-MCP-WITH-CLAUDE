@@ -35,7 +35,7 @@ namespace RevitMCP.Addin.Tools.Automation
             if (!System.Enum.TryParse<BuiltInCategory>(args["category"]!.ToString(), out var bic))
                 return ErrorContent("잘못된 카테고리");
 
-            var viewId    = new ElementId(args["viewId"]!.ToObject<int>());
+            var viewId    = new ElementId(args["viewId"]!.ToObject<long>());
             var view      = doc.GetElement(viewId) as View ?? throw new System.Exception("뷰 없음");
             var addLeader = args["addLeader"]?.ToObject<bool>() ?? false;
 

@@ -346,7 +346,7 @@ namespace RevitMCP.Addin.Tools.Modeling
         public override JToken Execute(Document doc, JObject args)
         {
             double MmToFt(double mm) => mm / 304.8;
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var v = new XYZ(MmToFt(args["dx"]!.ToObject<double>()),
                             MmToFt(args["dy"]!.ToObject<double>()),
                             MmToFt(args["dz"]?.ToObject<double>() ?? 0));
@@ -384,7 +384,7 @@ namespace RevitMCP.Addin.Tools.Modeling
         public override JToken Execute(Document doc, JObject args)
         {
             double MmToFt(double mm) => mm / 304.8;
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var v = new XYZ(MmToFt(args["dx"]!.ToObject<double>()),
                             MmToFt(args["dy"]!.ToObject<double>()),
                             MmToFt(args["dz"]?.ToObject<double>() ?? 0));
@@ -419,7 +419,7 @@ namespace RevitMCP.Addin.Tools.Modeling
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var elem = doc.GetElement(id);
             var bb = elem.get_BoundingBox(null);
             var center = (bb.Min + bb.Max) / 2.0;
@@ -457,7 +457,7 @@ namespace RevitMCP.Addin.Tools.Modeling
         public override JToken Execute(Document doc, JObject args)
         {
             double MmToFt(double mm) => mm / 304.8;
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var offset = MmToFt(args["offset"]?.ToObject<double>() ?? 0);
             var axisStr = args["axis"]!.ToString();
 
@@ -498,9 +498,9 @@ namespace RevitMCP.Addin.Tools.Modeling
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var id1 = new ElementId(args["elementId1"]!.ToObject<int>());
-            var id2 = new ElementId(args["elementId2"]!.ToObject<int>());
-            var viewId = new ElementId(args["viewId"]!.ToObject<int>());
+            var id1 = new ElementId(args["elementId1"]!.ToObject<long>());
+            var id2 = new ElementId(args["elementId2"]!.ToObject<long>());
+            var viewId = new ElementId(args["viewId"]!.ToObject<long>());
             var view = doc.GetElement(viewId) as View
                 ?? throw new System.Exception("유효하지 않은 뷰 ID");
 

@@ -30,7 +30,7 @@ namespace RevitMCP.Addin.Tools.Params
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var elem = doc.GetElement(id) ?? throw new System.Exception("요소 없음");
             var paramName = args["paramName"]!.ToString();
             var value = args["value"]!.ToString();
@@ -94,7 +94,7 @@ namespace RevitMCP.Addin.Tools.Params
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var ids = args["elementIds"]!.ToObject<int[]>()!;
+            var ids = args["elementIds"]!.ToObject<long[]>()!;
             var parameters = args["parameters"]!.ToObject<Dictionary<string, string>>()!;
             int success = 0;
 

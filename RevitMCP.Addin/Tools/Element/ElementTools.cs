@@ -91,7 +91,7 @@ namespace RevitMCP.Addin.Tools.Elements
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var id = new ElementId(args["elementId"]!.ToObject<int>());
+            var id = new ElementId(args["elementId"]!.ToObject<long>());
             var elem = doc.GetElement(id);
             if (elem == null) return ErrorContent("요소를 찾을 수 없습니다.");
 
@@ -138,7 +138,7 @@ namespace RevitMCP.Addin.Tools.Elements
 
         public override JToken Execute(Document doc, JObject args)
         {
-            var ids = args["elementIds"]!.ToObject<int[]>()!
+            var ids = args["elementIds"]!.ToObject<long[]>()!
                 .Select(i => new ElementId(i)).ToList();
             using var tx = new Transaction(doc, "MCP: 요소 삭제");
             tx.Start();
@@ -177,7 +177,7 @@ namespace RevitMCP.Addin.Tools.Elements
             var uiDoc = RevitMCP.Addin.Server.RevitEventDispatcher.CurrentApp?.ActiveUIDocument;
             if (uiDoc == null) return ErrorContent("활성 문서 없음");
 
-            var ids = args["elementIds"]!.ToObject<int[]>()!
+            var ids = args["elementIds"]!.ToObject<long[]>()!
                 .Select(i => new ElementId(i)).ToList();
             uiDoc.Selection.SetElementIds(ids);
             return TextContent($"{ids.Count}개 요소 선택됨");
