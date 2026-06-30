@@ -168,7 +168,7 @@ namespace RevitMCP.Addin.Tools.Views
             var view = new FilteredElementCollector(doc).OfClass(typeof(View))
                 .Cast<View>().FirstOrDefault(v => !v.IsTemplate && v.Name == name)
                 ?? throw new Exception($"뷰 없음: {name}");
-            var detailLevel = Enum.Parse<ViewDetailLevel>(levelStr);
+            var detailLevel = (ViewDetailLevel)Enum.Parse(typeof(ViewDetailLevel), levelStr);
             using var tx = new Transaction(doc, "MCP: 상세 수준");
             tx.Start();
             view.DetailLevel = detailLevel;

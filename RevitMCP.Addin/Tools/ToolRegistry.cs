@@ -122,6 +122,12 @@ namespace RevitMCP.Addin.Tools
                 new GetElementsByLevelTool(),      // 레벨별 요소 목록
                 new GetElementBoundingBoxTool(),   // 바운딩 박스 조회
 
+                // ── 선택 요소 조회 / Join ────────────────────────────
+                new GetSelectedElementsTool(),     // 현재 선택된 요소 ID·정보 조회
+                new JoinSelectedElementsTool(),    // 선택 요소 간 Join
+                new UnjoinSelectedElementsTool(),  // 선택 요소 간 Join 해제
+                new GetElementJoinStatusTool(),    // 선택 요소 결합 상태 조회
+
                 // ── Join Geometry (카테고리 지정) ────────────────────
                 new JoinGeometryByCategoryTool(),  // 카테고리별 자동 Join
                 new UnjoinGeometryByCategoryTool(), // 카테고리별 Join 해제
@@ -149,7 +155,8 @@ namespace RevitMCP.Addin.Tools
                 new ExecuteCSharpTool(),           // C# 코드 런타임 컴파일 & 실행
                 new GetRevitApiHintsTool(),        // Revit API 힌트 조회
                 new RunDynamoScriptTool(),         // Dynamo 스크립트 실행
-                new SolveMissingFeatureTool()      // 미구현 기능 대안 분석
+                new SolveMissingFeatureTool(),     // 미구현 기능 → C# 코드 자동 생성
+                new ListMcpToolsTool()             // 등록된 MCP 도구 전체 목록 조회
             );
         }
 

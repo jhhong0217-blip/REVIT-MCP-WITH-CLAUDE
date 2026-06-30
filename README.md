@@ -60,7 +60,7 @@ RevitMCP.Bridge.exe          ← Claude Desktop이 자동 실행
 RevitMCP Addin (Revit 내부)
 ┌─────────────────────────────┐
 │  MCPServer (HttpListener)   │
-│  ToolRegistry (93개 도구)   │
+│  ToolRegistry (97개 도구)   │
 │  RevitEventDispatcher       │ ← Revit 메인 스레드 위임
 └─────────────────────────────┘
        │ ExternalEvent
@@ -70,7 +70,7 @@ Revit API (메인 스레드)
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 93개
+## 제공 도구 (MCP Tools) — 총 98개
 
 ### 요소 조회 / 조작
 
@@ -88,6 +88,10 @@ Revit API (메인 스레드)
 | `set_type_parameter` | 요소 타입의 파라미터 값 설정 |
 | `get_elements_by_level` | 레벨별 요소 카테고리 그룹 조회 |
 | `get_element_bounding_box` | 요소 바운딩 박스 좌표(mm) 조회 |
+| `get_selected_elements` | **현재 Revit 선택 요소의 ID·카테고리·레벨 조회** |
+| `join_selected_elements` | 선택된 요소들 간 Join Geometry (ID 지정 또는 현재 선택 자동) |
+| `unjoin_selected_elements` | 선택된 요소들 간 Join Geometry 해제 |
+| `get_element_join_status` | 선택 요소 간 결합 상태 전체 조회 |
 | `join_geometry_by_category` | 두 카테고리 간 교차 요소 자동 Join Geometry |
 | `unjoin_geometry_by_category` | 두 카테고리 간 Join Geometry 전체 해제 |
 | `join_geometry_by_ids` | ID 지정 요소 그룹 간 Join/Unjoin |
@@ -213,8 +217,9 @@ MCP에 없는 기능이나 Revit API에서 직접 지원하지 않는 작업을 
 |------|------|
 | `execute_csharp` | **C# 코드를 런타임 컴파일 & 실행** — Revit API 전체를 활용한 커스텀 로직 즉시 구현 |
 | `get_revit_api_hints` | Revit API 주요 클래스·패턴 힌트 조회 (execute_csharp 코드 작성 보조) |
+| `solve_missing_feature` | 원하는 작업을 자연어로 설명하면 **execute_csharp 코드 초안 자동 생성** |
+| `list_mcp_tools` | 현재 등록된 MCP 도구 전체 목록 조회 (기능 존재 여부 확인용) |
 | `run_dynamo_script` | Dynamo .dyn 스크립트 파일 실행 |
-| `solve_missing_feature` | 원하는 작업을 분석하여 최적 우회 방법 제안 |
 
 **사용 예시:**
 ```

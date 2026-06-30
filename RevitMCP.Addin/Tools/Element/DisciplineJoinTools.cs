@@ -26,7 +26,6 @@ namespace RevitMCP.Addin.Tools.Elements
             BuiltInCategory.OST_StructuralColumns,
             BuiltInCategory.OST_StructuralFraming,
             BuiltInCategory.OST_StructuralFoundation,
-            BuiltInCategory.OST_StructuralWall,
         };
 
         public static BuiltInCategory[] Get(string discipline) => discipline.ToLower() switch

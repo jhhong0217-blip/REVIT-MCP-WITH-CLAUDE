@@ -98,6 +98,10 @@ echo  [4/4] Setting up Claude Desktop...
 set "BRIDGE_OUT=%APPDATA%\RevitMCP\bridge"
 if not exist "%BRIDGE_OUT%" mkdir "%BRIDGE_OUT%"
 
+echo  Stopping bridge process if running...
+taskkill /F /IM RevitMCP.Bridge.exe >nul 2>&1
+timeout /t 1 >nul
+
 echo  Building bridge...
 "%DOTNET%" publish "%BRIDGE_PROJ%" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o "%BRIDGE_OUT%"
 if errorlevel 1 (

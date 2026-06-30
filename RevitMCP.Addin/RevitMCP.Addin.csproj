@@ -56,11 +56,12 @@
     <Reference Include="System.Web" />
     <Reference Include="PresentationCore" />
     <Reference Include="WindowsBase" />
-    <Reference Include="Microsoft.CSharp" />
+    <!-- Microsoft.CSharp 제거 — Roslyn으로 대체 -->
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
   </ItemGroup>
 
   <ItemGroup>

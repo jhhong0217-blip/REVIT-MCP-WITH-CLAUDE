@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -71,10 +72,16 @@ namespace RevitMCP.Addin.Tools.Project
                     ["name"] = def.Name,
                     ["parameterType"] = def.GetDataType().TypeId,
                     ["bindingType"] = binding is InstanceBinding ? "Instance" : "Type",
-                    ["group"] = def.ParameterGroup.ToString()
+                    ["group"] = TryGetGroupLabel(def)
                 });
             }
             return TextContent(result.ToString());
+        }
+
+        private static string TryGetGroupLabel(InternalDefinition def)
+        {
+            try { return LabelUtils.GetLabelForGroup(def.GetGroupTypeId()); }
+            catch { return def.GetGroupTypeId()?.TypeId ?? "Unknown"; }
         }
     }
 
