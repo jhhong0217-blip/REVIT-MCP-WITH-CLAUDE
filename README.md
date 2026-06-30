@@ -60,7 +60,7 @@ RevitMCP.Bridge.exe          ← Claude Desktop이 자동 실행
 RevitMCP Addin (Revit 내부)
 ┌─────────────────────────────┐
 │  MCPServer (HttpListener)   │
-│  ToolRegistry (85개 도구)   │
+│  ToolRegistry (89개 도구)   │
 │  RevitEventDispatcher       │ ← Revit 메인 스레드 위임
 └─────────────────────────────┘
        │ ExternalEvent
@@ -70,7 +70,7 @@ Revit API (메인 스레드)
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 85개
+## 제공 도구 (MCP Tools) — 총 89개
 
 ### 요소 조회 / 조작
 
@@ -92,6 +92,10 @@ Revit API (메인 스레드)
 | `unjoin_geometry_by_category` | 두 카테고리 간 Join Geometry 전체 해제 |
 | `join_geometry_by_ids` | ID 지정 요소 그룹 간 Join/Unjoin |
 | `switch_join_order` | 두 요소 간 Join 우선순위(절단 방향) 반전 |
+| `join_disciplines` | 건축(arch)↔구조(struct) 분야별 자동 Join Geometry |
+| `unjoin_disciplines` | 건축↔구조 분야별 Join Geometry 전체 해제 |
+| `get_join_status` | 건축/구조 Join 현황 분석 (결합쌍 수, 미결합 교차 요소 보고) |
+| `auto_join_all_disciplines` | 건축↔구조, 구조↔구조 전체 일괄 Join |
 
 ### 모델링 자동화
 
