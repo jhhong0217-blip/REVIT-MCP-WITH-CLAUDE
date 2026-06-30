@@ -1,5 +1,6 @@
 using Autodesk.Revit.DB;
 using Newtonsoft.Json.Linq;
+using RevitMCP.Addin.Server;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -378,6 +379,85 @@ namespace RevitMCP.Addin.Tools.Docs
             var tag = IndependentTag.Create(doc, viewId, new Reference(elem), addLeader, TagMode.TM_ADDBY_CATEGORY, TagOrientation.Horizontal, center);
             tx.Commit();
             return TextContent($"태그 추가 완료 (ID: {tag.Id.Value})");
+        }
+    }
+
+    public class NavigateViewTool : ToolBase
+    {
+        public override string Name => "navigate_view";
+        public override string Description => "지정한 뷰 이름으로 Revit 활성 뷰를 전환합니다.";
+
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name,
+            ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["required"] = new JArray { "viewName" },
+                ["properties"] = new JObject
+                {
+                    ["viewName"] = new JObject { ["type"] = "string", ["description"] = "열 뷰 이름 (부분 일치 가능)" }
+                }
+            }
+        };
+
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var name = args["viewName"]?.ToString() ?? throw new System.Exception("viewName 필수");
+            var view = new FilteredElementCollector(doc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(v => !v.IsTemplate && v.Name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(v => v.Name.Length)
+                .FirstOrDefault()
+                ?? throw new System.Exception($"뷰를 찾을 수 없음: {name}");
+
+            var uiApp = Server.RevitEventDispatcher.CurrentApp
+                ?? throw new System.Exception("UIApplication 없음");
+            uiApp.ActiveUIDocument.ActiveView = view;
+
+            return TextContent($"뷰 전환 완료: {view.Name} (ID: {view.Id.Value})");
+        }
+    }
+
+    public class ListViewsTool : ToolBase
+    {
+        public override string Name => "list_views";
+        public override string Description => "현재 모델의 모든 뷰 목록을 반환합니다.";
+
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name,
+            ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["properties"] = new JObject
+                {
+                    ["viewType"] = new JObject { ["type"] = "string", ["description"] = "필터: FloorPlan, CeilingPlan, Elevation, Section, ThreeD, DraftingView, Legend, Schedule, DrawingSheet 등 (미지정 시 전체)" }
+                }
+            }
+        };
+
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var filter = args["viewType"]?.ToString();
+            var views = new FilteredElementCollector(doc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(v => !v.IsTemplate)
+                .Where(v => filter == null || v.ViewType.ToString().IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(v => v.ViewType.ToString())
+                .ThenBy(v => v.Name)
+                .Select(v => new JObject
+                {
+                    ["name"] = v.Name,
+                    ["viewType"] = v.ViewType.ToString(),
+                    ["id"] = v.Id.Value
+                });
+
+            return TextContent(new JArray(views).ToString());
         }
     }
 }

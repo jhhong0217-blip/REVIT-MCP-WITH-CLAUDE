@@ -60,19 +60,36 @@ namespace RevitMCP.Addin
             {
                 ToolTip = "MCP 서버를 시작/중지합니다",
                 LongDescription = "Claude 등 AI 에이전트가 Revit 모델에 접근할 수 있도록 로컬 MCP 서버를 켜거나 끕니다.",
-                Image = LoadImage("off_16.png"),
-                LargeImage = LoadImage("off_32.png"),
             };
+            var offSmall = LoadImage("off_16.png");
+            var offLarge = LoadImage("off_32.png");
+            if (offSmall != null) buttonData.Image = offSmall;
+            if (offLarge != null) buttonData.LargeImage = offLarge;
 
             _toggleButton = panel.AddItem(buttonData);
         }
 
-        private static BitmapImage LoadImage(string name)
+        private static BitmapImage? LoadImage(string name)
         {
-            // 리소스가 없으면 기본 아이콘 반환
-            var uri = new Uri($"pack://application:,,,/RevitMCP.Addin;component/Resources/{name}", UriKind.Absolute);
-            try { return new BitmapImage(uri); }
-            catch { return new BitmapImage(); }
+            try
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                // 어셈블리 내 임베드 리소스 스트림으로 직접 로드
+                var resourceName = $"RevitMCP.Addin.Resources.{name}";
+                using var stream = asm.GetManifestResourceStream(resourceName);
+                if (stream == null) return null;
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.StreamSource = stream;
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                img.Freeze();
+                return img;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         // ── 버튼 상태 갱신 ────────────────────────────────────────
@@ -84,8 +101,10 @@ namespace RevitMCP.Addin
             btn.ToolTip = isRunning
                 ? $"MCP 서버 실행 중 (포트 {Config.Port}) — 클릭하여 중지"
                 : "MCP 서버가 중지됨 — 클릭하여 시작";
-            btn.LargeImage = LoadImage(isRunning ? "on_32.png" : "off_32.png");
-            btn.Image = LoadImage(isRunning ? "on_16.png" : "off_16.png");
+            var large = LoadImage(isRunning ? "on_32.png" : "off_32.png");
+            var small = LoadImage(isRunning ? "on_16.png" : "off_16.png");
+            if (large != null) btn.LargeImage = large;
+            if (small != null) btn.Image = small;
         }
     }
 }

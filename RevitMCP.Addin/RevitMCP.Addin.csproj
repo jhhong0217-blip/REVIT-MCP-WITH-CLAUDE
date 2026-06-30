@@ -62,5 +62,11 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\off_16.png" />
+    <EmbeddedResource Include="Resources\off_32.png" />
+    <EmbeddedResource Include="Resources\on_16.png" />
+    <EmbeddedResource Include="Resources\on_32.png" />
+  </ItemGroup>
 
 </Project>

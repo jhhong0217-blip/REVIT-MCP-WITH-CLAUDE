@@ -36,6 +36,8 @@ namespace RevitMCP.Addin.Server
             _uiApp = uiApp;
             _registry.Initialize(uiApp);
 
+            RevitEventDispatcher.Initialize(uiApp);
+
             _listener = new HttpListener();
             _listener.Prefixes.Add($"http://localhost:{Config.Port}/");
             _listener.Start();

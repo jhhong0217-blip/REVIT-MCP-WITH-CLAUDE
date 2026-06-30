@@ -24,7 +24,8 @@ namespace RevitMCP.Addin.Server
 
         public static void Dispatch(UIApplication app, Action<Document> action)
         {
-            if (_event == null) Initialize(app);
+            if (_event == null)
+                throw new InvalidOperationException("RevitEventDispatcher not initialized. Call Initialize() during Revit startup.");
             _handler!.Enqueue(action);
             _event!.Raise();
         }

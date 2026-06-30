@@ -47,6 +47,8 @@ namespace RevitMCP.Addin.Tools
                 new AddRevisionTool(),
                 new CreateTextNoteTool(),
                 new TagElementTool(),
+                new NavigateViewTool(),
+                new ListViewsTool(),
 
                 // ── 파라미터 관리 ────────────────────────────────
                 new BulkSetParametersTool(),
