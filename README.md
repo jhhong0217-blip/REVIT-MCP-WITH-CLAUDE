@@ -1,16 +1,14 @@
 # RevitMCP — AI 기반 Revit 자동화 플랫폼
 
-**Claude Desktop 앱**과 Revit을 연결하여 모델링 자동화, 도서 자동화, 충돌 검사, 패밀리 편집 등을 AI로 처리할 수 있는 Revit Addin입니다.
+**Claude Desktop 앱 채팅창**과 Revit을 연결하여 모델링 자동화, 도서 자동화, 충돌 검사, 패밀리 편집 등을 AI로 처리할 수 있는 Revit Addin입니다.
 
 ## 지원 버전
 
-| Revit | .NET | 상태 |
-|-------|------|------|
-| 2025  | 4.8  | ✅ 지원 |
-| 2026  | 4.8  | ✅ 지원 |
-| 2027  | 4.8  | ✅ 지원 |
-
-> ⚠️ **Claude Desktop 전용입니다.** Claude Code(터미널)에서는 동작하지 않습니다.
+| Revit | 상태 |
+|-------|------|
+| 2025  | ✅ 지원 |
+| 2026  | ✅ 지원 |
+| 2027  | ✅ 지원 |
 
 ---
 
@@ -19,34 +17,60 @@
 ### 사전 준비
 
 - [Revit 2025 / 2026 / 2027](https://www.autodesk.com/products/revit) 설치
-- [.NET SDK 4.8 이상](https://dotnet.microsoft.com/download) 설치
 - [Claude Desktop 앱](https://claude.ai/download) 설치
+- .NET SDK 8 — 없으면 Install.bat이 자동 설치
 
-### 설치 방법
+### 설치 (중요: Claude Desktop을 완전히 종료한 상태에서 실행)
 
-**`Install.bat` 파일을 더블클릭하면 자동으로 설치됩니다.**
+1. **Claude Desktop 완전 종료** (작업표시줄 우클릭 → Quit)
+2. `Install.bat` 더블클릭
+3. 아무 키 누르기
+4. 설치할 Revit 버전 선택 (`[1]` ~ `[4] All`)
+5. 설치 완료 후 **Revit 실행 → RevitMCP 탭 → [Start MCP] 클릭**
+6. **Claude Desktop 재시작**
 
-> PowerShell 불필요. 순수 배치 스크립트로 동작하여 회사 PC 환경에서도 사용 가능합니다.
+> ⚠️ Claude Desktop이 실행 중일 때 설치하면 config가 초기화됩니다. 반드시 종료 후 실행하세요.
 
-실행하면 아래가 자동으로 처리됩니다:
+---
 
-1. 설치된 Revit 버전 자동 감지
-2. 버전 선택 메뉴 표시
-3. Revit Addin 빌드 및 설치
-4. Claude Desktop MCP 자동 등록 (`claude_desktop_config.json`)
+## 사용 방법
 
-### 사용 방법
+1. Revit 실행
+2. **RevitMCP 탭 → [Start MCP]** 클릭 (버튼이 초록색으로 변함)
+3. Claude Desktop 앱 채팅창에서 Revit 작업 요청
 
 ```
-1. Revit 재시작
-2. 'RevitMCP' 탭 → [MCP 시작] 버튼 클릭
-3. Claude Desktop 앱 재시작
-4. Claude에게 Revit 작업을 요청하세요!
+"현재 모델의 레벨과 요소 수를 알려줘"
+"1층 평면도의 모든 벽을 조회해줘"
+"A-101 시트 만들고 1층 평면도 배치해줘"
+"구조 기둥과 덕트 충돌 검사해줘"
 ```
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 55개
+## 아키텍처
+
+```
+Claude Desktop 채팅창
+       │ stdio (JSON-RPC)
+       ▼
+RevitMCP.Bridge.exe          ← Claude Desktop이 자동 실행
+       │ HTTP POST localhost:9876
+       ▼
+RevitMCP Addin (Revit 내부)
+┌─────────────────────────────┐
+│  MCPServer (HttpListener)   │
+│  ToolRegistry (57개 도구)   │
+│  RevitEventDispatcher       │ ← Revit 메인 스레드 위임
+└─────────────────────────────┘
+       │ ExternalEvent
+       ▼
+Revit API (메인 스레드)
+```
+
+---
+
+## 제공 도구 (MCP Tools) — 총 57개
 
 ### 요소 조회 / 조작
 
@@ -83,6 +107,8 @@
 | `create_view` | 평면도·입면도·단면도 생성 |
 | `duplicate_view` | 뷰 복제 (상세 포함 선택) |
 | `apply_view_template` | 뷰 템플릿 적용 |
+| `list_views` | 현재 모델의 모든 뷰 목록 조회 |
+| `navigate_view` | 지정한 이름의 뷰로 활성 뷰 전환 |
 | `place_viewport` | 시트에 뷰 배치 |
 | `create_schedule` | 일람표 생성 |
 | `export_sheets_to_pdf` | 시트 PDF 내보내기 |
@@ -129,10 +155,10 @@
 | `replace_family_type` | 패밀리 타입 일괄 교체 |
 | `export_family` | 패밀리 .rfa 파일로 내보내기 |
 | `get_family_parameters` | 패밀리 파라미터 목록 조회 |
-| `add_family_parameter` | 패밀리에 파라미터 추가 (인스턴스/타입, 유형, 그룹 지정) |
+| `add_family_parameter` | 패밀리에 파라미터 추가 |
 | `remove_family_parameter` | 패밀리 파라미터 삭제 |
-| `set_family_parameter_formula` | 파라미터 수식 설정 (예: Width * 2) |
-| `add_family_type` | 패밀리에 새 타입 추가 및 파라미터 값 설정 |
+| `set_family_parameter_formula` | 파라미터 수식 설정 |
+| `add_family_type` | 패밀리에 새 타입 추가 |
 
 ### 작업세트 관리
 
@@ -153,23 +179,29 @@
 
 ---
 
-## 사용 예시 (Claude Desktop과 대화)
+## 사용 예시
 
 ```
+"현재 모델 정보 알려줘"
+→ get_model_info
+
 "1층 평면도의 모든 벽을 조회해줘"
-→ get_elements(category: "OST_Walls", levelName: "1F")
+→ get_elements(category: "OST_Walls", levelName: "Z1")
 
 "A-101 시트 만들고 1층 평면도 배치해줘"
 → create_sheet → create_view → place_viewport
 
 "문 일람표 만들어서 PDF로 내보내줘"
-→ create_schedule(category: "OST_Doors") → export_sheets_to_pdf
+→ create_schedule → export_sheets_to_pdf
 
 "구조 기둥과 덕트 충돌 검사해줘"
 → clash_detection(category1: "OST_StructuralColumns", category2: "OST_DuctCurves")
 
-"커튼월 패밀리에 Width 파라미터 추가해줘"
-→ add_family_parameter(familyName: "커튼월", paramName: "Width", paramType: "Length", isInstance: true)
+"Z2 레벨 평면도로 이동해줘"
+→ navigate_view(viewName: "Z2")
+
+"모든 평면도 목록 보여줘"
+→ list_views(viewType: "FloorPlan")
 ```
 
 ---
@@ -178,48 +210,26 @@
 
 ```
 revit-mcp/
-├── Setup.ps1                          # 단일 설치 스크립트
-├── addin/
-│   ├── RevitMCP.2025.addin
-│   ├── RevitMCP.2026.addin
-│   └── RevitMCP.2027.addin
-└── RevitMCP.Addin/
-    ├── App.cs                         # IExternalApplication (리본 버튼)
-    ├── Config.cs                      # 포트(9876) / 버전 설정
-    ├── Logger.cs                      # 로그 → %AppData%\RevitMCP\
-    ├── Commands/
-    │   └── ToggleMCPCommand.cs        # MCP 시작/중지 명령
-    ├── Server/
-    │   ├── MCPServer.cs               # HttpListener JSON-RPC 2.0 서버
-    │   └── RevitEventDispatcher.cs    # 메인 스레드 안전 실행
-    └── Tools/
-        ├── ToolBase.cs
-        ├── ToolRegistry.cs            # 55개 도구 등록
-        ├── Element/      ElementTools.cs
-        ├── Modeling/     ModelingTools.cs
-        ├── Document/     DocumentTools.cs
-        ├── Parameter/    ParameterTools.cs
-        ├── Family/       FamilyTools.cs, FamilyEditTools.cs
-        ├── Analysis/     AnalysisTools.cs, QualityCheckTools.cs
-        ├── Workset/      WorksetTools.cs
-        └── Automation/   AutomationTools.cs
-```
-
-## 아키텍처
-
-```
-Claude Desktop 앱
-       │ HTTP JSON-RPC 2.0
-       ▼
-RevitMCP Server (localhost:9876)
-┌─────────────────────────────┐
-│  MCPServer (HttpListener)   │
-│  ToolRegistry (55개 도구)   │
-│  RevitEventDispatcher       │ ←─ Revit 메인 스레드 위임
-└─────────────────────────────┘
-       │ ExternalEvent
-       ▼
-Revit API (메인 스레드)
+├── Install.bat                        # 단일 설치 스크립트
+├── RevitMCP.Addin/                    # Revit 애드인 (C# .NET 4.8)
+│   ├── App.cs                         # IExternalApplication (리본 버튼)
+│   ├── Config.cs                      # 포트(9876) / 버전 설정
+│   ├── Commands/
+│   │   └── ToggleMCPCommand.cs        # MCP 시작/중지
+│   ├── Server/
+│   │   ├── MCPServer.cs               # HttpListener JSON-RPC 2.0
+│   │   └── RevitEventDispatcher.cs    # 메인 스레드 안전 실행
+│   └── Tools/                         # 57개 도구
+│       ├── Element/    ElementTools.cs
+│       ├── Modeling/   ModelingTools.cs
+│       ├── Document/   DocumentTools.cs
+│       ├── Parameter/  ParameterTools.cs
+│       ├── Family/     FamilyTools.cs, FamilyEditTools.cs
+│       ├── Analysis/   AnalysisTools.cs, QualityCheckTools.cs
+│       ├── Workset/    WorksetTools.cs
+│       └── Automation/ AutomationTools.cs
+└── RevitMCP.Bridge/                   # stdio↔HTTP 브릿지 (C# .NET 8)
+    └── Program.cs                     # Claude Desktop ↔ Revit 연결
 ```
 
 ## 로그 위치
