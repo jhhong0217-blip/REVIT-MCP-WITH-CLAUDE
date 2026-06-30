@@ -627,19 +627,19 @@ namespace RevitMCP.Addin.Tools.Dynamic
                     .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
                     .Where(t => !t.IsAbstract && typeof(ToolBase).IsAssignableFrom(t))
                     .Select(t => { try { var inst = (ToolBase)Activator.CreateInstance(t)!; return (inst.Name, inst.Description); } catch { return ("", ""); } })
-                    .Where(x => !string.IsNullOrEmpty(x.Name))
-                    .OrderBy(x => x.Name)
+                    .Where(x => !string.IsNullOrEmpty(x.Item1))
+                    .OrderBy(x => x.Item1)
                     .ToList();
             }
 
             var tools = filter == null
                 ? _cached
-                : _cached.Where(x => x.name.Contains(filter) || x.desc.ToLower().Contains(filter)).ToList();
+                : _cached.Where(x => x.Item1.Contains(filter) || x.Item2.ToLower().Contains(filter)).ToList();
 
             var arr = new JArray(tools.Select(t => new JObject
             {
-                ["name"] = t.name,
-                ["description"] = t.desc
+                ["name"] = t.Item1,
+                ["description"] = t.Item2
             }));
 
             return TextContent(new JObject
