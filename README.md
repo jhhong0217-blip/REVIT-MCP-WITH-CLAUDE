@@ -60,7 +60,7 @@ RevitMCP.Bridge.exe          ← Claude Desktop이 자동 실행
 RevitMCP Addin (Revit 내부)
 ┌─────────────────────────────┐
 │  MCPServer (HttpListener)   │
-│  ToolRegistry (57개 도구)   │
+│  ToolRegistry (81개 도구)   │
 │  RevitEventDispatcher       │ ← Revit 메인 스레드 위임
 └─────────────────────────────┘
        │ ExternalEvent
@@ -70,7 +70,7 @@ Revit API (메인 스레드)
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 57개
+## 제공 도구 (MCP Tools) — 총 81개
 
 ### 요소 조회 / 조작
 
@@ -81,6 +81,13 @@ Revit API (메인 스레드)
 | `set_parameter` | 파라미터 값 설정 |
 | `delete_element` | 요소 삭제 |
 | `select_elements` | UI에서 요소 선택 |
+| `get_element_by_id` | ID로 요소 정보 및 파라미터 조회 |
+| `list_element_types` | 카테고리의 모든 패밀리 타입 목록 |
+| `get_element_location` | 요소 위치 좌표(mm) 및 방향 |
+| `duplicate_element_type` | 기존 타입 복제하여 새 이름으로 생성 |
+| `set_type_parameter` | 요소 타입의 파라미터 값 설정 |
+| `get_elements_by_level` | 레벨별 요소 카테고리 그룹 조회 |
+| `get_element_bounding_box` | 요소 바운딩 박스 좌표(mm) 조회 |
 
 ### 모델링 자동화
 
@@ -97,6 +104,7 @@ Revit API (메인 스레드)
 | `rotate_element` | 요소 회전 |
 | `mirror_element` | 요소 미러 |
 | `create_dimension` | 치수선 생성 |
+| `create_group` | 선택한 요소들을 그룹으로 묶기 |
 
 ### 도서 자동화
 
@@ -118,6 +126,23 @@ Revit API (메인 스레드)
 | `auto_tag_all` | 카테고리 전체 자동 태그 |
 | `renumber_elements` | 요소 번호 자동 부여 |
 
+### 뷰 고급 관리
+
+| 도구 | 설명 |
+|------|------|
+| `get_sheets` | 모든 도면 시트 목록 + 배치된 뷰 정보 |
+| `get_active_view_info` | 현재 활성 뷰 상세 정보 (타입·축척·레벨) |
+| `set_view_scale` | 뷰 축척 변경 (예: 100 → 1:100) |
+| `set_view_detail_level` | 뷰 상세 수준 변경 (Coarse/Medium/Fine) |
+| `set_crop_region` | 자르기 영역 활성화/비활성화 및 경계 설정 |
+| `hide_elements_in_view` | 뷰에서 요소 숨기기 |
+| `unhide_elements_in_view` | 뷰에서 숨긴 요소 다시 표시 |
+| `isolate_category_in_view` | 특정 카테고리만 격리 표시 |
+| `create_view_filter` | 파라미터 조건 기반 뷰 필터 생성 |
+| `override_element_graphics` | 요소 그래픽 재지정 (색상·투명도) |
+| `color_clash_elements` | 간섭 요소 색상 강조 표시 |
+| `purge_unused` | 미사용 패밀리/타입 정리 |
+
 ### 파라미터 관리
 
 | 도구 | 설명 |
@@ -136,15 +161,6 @@ Revit API (메인 스레드)
 | `find_untagged_elements` | 미태그 요소 탐지 |
 | `find_undimensioned_elements` | 미치수 요소 탐지 |
 | `clash_detection` | 두 카테고리 간 충돌 감지 |
-
-### 뷰 / 그래픽 관리
-
-| 도구 | 설명 |
-|------|------|
-| `create_view_filter` | 파라미터 조건 기반 뷰 필터 생성 |
-| `override_element_graphics` | 요소 그래픽 재지정 (색상·투명도) |
-| `color_clash_elements` | 간섭 요소 색상 강조 표시 |
-| `purge_unused` | 미사용 패밀리/타입 정리 |
 
 ### 패밀리 관리 / 파라미터 편집
 
@@ -169,6 +185,18 @@ Revit API (메인 스레드)
 | `set_element_workset` | 요소 작업세트 변경 |
 | `assign_workset_by_category` | 카테고리별 작업세트 일괄 배정 |
 
+### 프로젝트 / 문서 관리
+
+| 도구 | 설명 |
+|------|------|
+| `list_phases` | 프로젝트 공사 단계(Phase) 목록 |
+| `set_element_phase` | 요소의 신설/철거 단계 설정 |
+| `get_linked_models` | 연결된 Revit 링크 파일 목록 |
+| `get_project_parameters` | 프로젝트/공유 파라미터 정의 목록 |
+| `get_revision_history` | 개정 이력 조회 |
+| `get_schedule_data` | 일람표 데이터 표 형식 조회 |
+| `get_rooms_info` | 룸 이름·번호·면적·레벨·위치 상세 조회 |
+
 ### 분석 / 물량
 
 | 도구 | 설명 |
@@ -176,6 +204,7 @@ Revit API (메인 스레드)
 | `get_model_info` | 프로젝트 전체 정보 조회 |
 | `material_takeoff` | 재료 물량 산출 |
 | `room_data_summary` | 룸 면적·둘레·레벨 전체 요약 |
+| `get_element_count` | 카테고리별 요소 수 집계 (레벨 필터 가능) |
 
 ---
 
@@ -219,10 +248,12 @@ revit-mcp/
 │   ├── Server/
 │   │   ├── MCPServer.cs               # HttpListener JSON-RPC 2.0
 │   │   └── RevitEventDispatcher.cs    # 메인 스레드 안전 실행
-│   └── Tools/                         # 57개 도구
-│       ├── Element/    ElementTools.cs
+│   └── Tools/                         # 81개 도구
+│       ├── Element/    ElementTools.cs, ElementAdvancedTools.cs
 │       ├── Modeling/   ModelingTools.cs
 │       ├── Document/   DocumentTools.cs
+│       ├── View/       ViewTools.cs
+│       ├── Project/    ProjectTools.cs
 │       ├── Parameter/  ParameterTools.cs
 │       ├── Family/     FamilyTools.cs, FamilyEditTools.cs
 │       ├── Analysis/   AnalysisTools.cs, QualityCheckTools.cs
