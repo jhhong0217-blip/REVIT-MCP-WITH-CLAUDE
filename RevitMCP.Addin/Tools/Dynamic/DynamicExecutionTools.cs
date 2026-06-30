@@ -21,7 +21,7 @@ namespace RevitMCP.Addin.Tools.Dynamic
         internal static readonly string[] DefaultUsings = new[]
         {
             "System", "System.Collections.Generic", "System.Linq", "System.Text",
-            "System.IO", "System.Math",
+            "System.IO",
             "Autodesk.Revit.DB", "Autodesk.Revit.DB.Architecture",
             "Autodesk.Revit.DB.Structure", "Autodesk.Revit.DB.Mechanical",
             "Autodesk.Revit.DB.Electrical", "Autodesk.Revit.DB.Plumbing",
