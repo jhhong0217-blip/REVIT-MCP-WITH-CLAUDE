@@ -60,7 +60,7 @@ RevitMCP.Bridge.exe          ← Claude Desktop이 자동 실행
 RevitMCP Addin (Revit 내부)
 ┌─────────────────────────────┐
 │  MCPServer (HttpListener)   │
-│  ToolRegistry (89개 도구)   │
+│  ToolRegistry (93개 도구)   │
 │  RevitEventDispatcher       │ ← Revit 메인 스레드 위임
 └─────────────────────────────┘
        │ ExternalEvent
@@ -70,7 +70,7 @@ Revit API (메인 스레드)
 
 ---
 
-## 제공 도구 (MCP Tools) — 총 89개
+## 제공 도구 (MCP Tools) — 총 93개
 
 ### 요소 조회 / 조작
 
@@ -204,6 +204,26 @@ Revit API (메인 스레드)
 | `get_revision_history` | 개정 이력 조회 |
 | `get_schedule_data` | 일람표 데이터 표 형식 조회 |
 | `get_rooms_info` | 룸 이름·번호·면적·레벨·위치 상세 조회 |
+
+### 동적 실행 / 기능 우회 (핵심 기능)
+
+MCP에 없는 기능이나 Revit API에서 직접 지원하지 않는 작업을 Claude가 즉석에서 구현하여 실행합니다.
+
+| 도구 | 설명 |
+|------|------|
+| `execute_csharp` | **C# 코드를 런타임 컴파일 & 실행** — Revit API 전체를 활용한 커스텀 로직 즉시 구현 |
+| `get_revit_api_hints` | Revit API 주요 클래스·패턴 힌트 조회 (execute_csharp 코드 작성 보조) |
+| `run_dynamo_script` | Dynamo .dyn 스크립트 파일 실행 |
+| `solve_missing_feature` | 원하는 작업을 분석하여 최적 우회 방법 제안 |
+
+**사용 예시:**
+```
+"MCP에 없는데, 모든 보의 단면 크기를 텍스트 파일로 저장해줘"
+→ solve_missing_feature → get_revit_api_hints → execute_csharp(code: "...")
+
+"지붕과 천장 사이의 공간 체적을 계산해줘"
+→ execute_csharp 로 Solid.Volume 계산 코드 직접 실행
+```
 
 ### 분석 / 물량
 

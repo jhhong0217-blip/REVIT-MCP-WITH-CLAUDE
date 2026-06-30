@@ -9,6 +9,7 @@ using RevitMCP.Addin.Tools.Workset;
 using RevitMCP.Addin.Tools.Automation;
 using RevitMCP.Addin.Tools.Views;
 using RevitMCP.Addin.Tools.Project;
+using RevitMCP.Addin.Tools.Dynamic;
 using System.Collections.Generic;
 
 namespace RevitMCP.Addin.Tools
@@ -142,7 +143,13 @@ namespace RevitMCP.Addin.Tools
                 new GetScheduleDataTool(),         // 일람표 데이터 조회
                 new SetElementPhaseTool(),         // 요소 단계 설정
                 new CreateGroupTool(),             // 그룹 생성
-                new GetRoomsInfoTool()             // 룸 상세 정보
+                new GetRoomsInfoTool(),            // 룸 상세 정보
+
+                // ── 동적 실행 / 기능 우회 ──────────────────────────
+                new ExecuteCSharpTool(),           // C# 코드 런타임 컴파일 & 실행
+                new GetRevitApiHintsTool(),        // Revit API 힌트 조회
+                new RunDynamoScriptTool(),         // Dynamo 스크립트 실행
+                new SolveMissingFeatureTool()      // 미구현 기능 대안 분석
             );
         }
 
