@@ -121,6 +121,12 @@ namespace RevitMCP.Addin.Tools
                 new GetElementsByLevelTool(),      // 레벨별 요소 목록
                 new GetElementBoundingBoxTool(),   // 바운딩 박스 조회
 
+                // ── Join Geometry ────────────────────────────────
+                new JoinGeometryByCategoryTool(),  // 카테고리별 자동 Join
+                new UnjoinGeometryByCategoryTool(), // 카테고리별 Join 해제
+                new JoinGeometryByIdsTool(),       // ID 지정 Join/Unjoin
+                new SwitchJoinOrderTool(),         // Join 우선순위 반전
+
                 // ── 프로젝트 관리 ────────────────────────────────
                 new ListPhasesTool(),              // 공사 단계 목록
                 new GetLinkedModelsTool(),         // 링크 파일 목록

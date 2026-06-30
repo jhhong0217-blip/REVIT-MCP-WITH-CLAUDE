@@ -291,4 +291,233 @@ namespace RevitMCP.Addin.Tools.Elements
             }.ToString());
         }
     }
+
+    public class JoinGeometryByCategoryTool : ToolBase
+    {
+        public override string Name => "join_geometry_by_category";
+        public override string Description => "두 카테고리 간 교차하는 요소들을 자동으로 Join Geometry(지오메트리 결합)합니다. 예: 벽+기둥, 바닥+보.";
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name, ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["required"] = new JArray { "category1", "category2" },
+                ["properties"] = new JObject
+                {
+                    ["category1"] = new JObject { ["type"] = "string", ["description"] = "첫 번째 카테고리 (예: OST_Walls)" },
+                    ["category2"] = new JObject { ["type"] = "string", ["description"] = "두 번째 카테고리 (예: OST_StructuralColumns)" },
+                    ["levelName"] = new JObject { ["type"] = "string", ["description"] = "레벨 필터 (선택, 미지정 시 전체)" }
+                }
+            }
+        };
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var cat1 = (BuiltInCategory)Enum.Parse(typeof(BuiltInCategory), args["category1"]!.ToString());
+            var cat2 = (BuiltInCategory)Enum.Parse(typeof(BuiltInCategory), args["category2"]!.ToString());
+            var levelName = args["levelName"]?.ToString();
+
+            ElementLevelFilter? levelFilter = null;
+            if (levelName != null)
+            {
+                var level = new FilteredElementCollector(doc).OfClass(typeof(Level))
+                    .Cast<Level>().FirstOrDefault(l => l.Name == levelName)
+                    ?? throw new Exception($"레벨 없음: {levelName}");
+                levelFilter = new ElementLevelFilter(level.Id);
+            }
+
+            IEnumerable<Element> elems1 = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType().OfCategory(cat1);
+            IEnumerable<Element> elems2 = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType().OfCategory(cat2);
+            if (levelFilter != null)
+            {
+                elems1 = new FilteredElementCollector(doc).WhereElementIsNotElementType().OfCategory(cat1).WherePasses(levelFilter);
+                elems2 = new FilteredElementCollector(doc).WhereElementIsNotElementType().OfCategory(cat2).WherePasses(levelFilter);
+            }
+
+            var list1 = elems1.ToList();
+            var list2 = elems2.ToList();
+
+            int joined = 0, skipped = 0;
+            using var tx = new Transaction(doc, "MCP: Join Geometry");
+            tx.Start();
+            foreach (var e1 in list1)
+            {
+                foreach (var e2 in list2)
+                {
+                    try
+                    {
+                        if (JoinGeometryUtils.AreElementsJoined(doc, e1, e2)) { skipped++; continue; }
+                        var bb1 = e1.get_BoundingBox(null);
+                        var bb2 = e2.get_BoundingBox(null);
+                        if (bb1 == null || bb2 == null) continue;
+                        // 바운딩 박스 교차 여부 빠른 검사
+                        if (bb1.Max.X < bb2.Min.X || bb2.Max.X < bb1.Min.X) continue;
+                        if (bb1.Max.Y < bb2.Min.Y || bb2.Max.Y < bb1.Min.Y) continue;
+                        if (bb1.Max.Z < bb2.Min.Z || bb2.Max.Z < bb1.Min.Z) continue;
+                        JoinGeometryUtils.JoinGeometry(doc, e1, e2);
+                        joined++;
+                    }
+                    catch { /* 결합 불가 조합 무시 */ }
+                }
+            }
+            tx.Commit();
+            return TextContent($"Join Geometry 완료: {joined}쌍 결합, {skipped}쌍 이미 결합됨 (대상: {list1.Count}×{list2.Count} 요소)");
+        }
+    }
+
+    public class UnjoinGeometryByCategoryTool : ToolBase
+    {
+        public override string Name => "unjoin_geometry_by_category";
+        public override string Description => "두 카테고리 간 Join Geometry(지오메트리 결합)를 모두 해제합니다.";
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name, ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["required"] = new JArray { "category1", "category2" },
+                ["properties"] = new JObject
+                {
+                    ["category1"] = new JObject { ["type"] = "string", ["description"] = "첫 번째 카테고리 (예: OST_Walls)" },
+                    ["category2"] = new JObject { ["type"] = "string", ["description"] = "두 번째 카테고리 (예: OST_StructuralColumns)" },
+                    ["levelName"] = new JObject { ["type"] = "string", ["description"] = "레벨 필터 (선택)" }
+                }
+            }
+        };
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var cat1 = (BuiltInCategory)Enum.Parse(typeof(BuiltInCategory), args["category1"]!.ToString());
+            var cat2 = (BuiltInCategory)Enum.Parse(typeof(BuiltInCategory), args["category2"]!.ToString());
+            var levelName = args["levelName"]?.ToString();
+
+            ElementLevelFilter? levelFilter = null;
+            if (levelName != null)
+            {
+                var level = new FilteredElementCollector(doc).OfClass(typeof(Level))
+                    .Cast<Level>().FirstOrDefault(l => l.Name == levelName)
+                    ?? throw new Exception($"레벨 없음: {levelName}");
+                levelFilter = new ElementLevelFilter(level.Id);
+            }
+
+            IEnumerable<Element> elems1 = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType().OfCategory(cat1);
+            IEnumerable<Element> elems2 = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType().OfCategory(cat2);
+            if (levelFilter != null)
+            {
+                elems1 = new FilteredElementCollector(doc).WhereElementIsNotElementType().OfCategory(cat1).WherePasses(levelFilter);
+                elems2 = new FilteredElementCollector(doc).WhereElementIsNotElementType().OfCategory(cat2).WherePasses(levelFilter);
+            }
+
+            var list1 = elems1.ToList();
+            var list2 = elems2.ToList();
+
+            int unjoined = 0;
+            using var tx = new Transaction(doc, "MCP: Unjoin Geometry");
+            tx.Start();
+            foreach (var e1 in list1)
+            {
+                foreach (var e2 in list2)
+                {
+                    try
+                    {
+                        if (!JoinGeometryUtils.AreElementsJoined(doc, e1, e2)) continue;
+                        JoinGeometryUtils.UnjoinGeometry(doc, e1, e2);
+                        unjoined++;
+                    }
+                    catch { }
+                }
+            }
+            tx.Commit();
+            return TextContent($"Unjoin Geometry 완료: {unjoined}쌍 결합 해제 (대상: {list1.Count}×{list2.Count} 요소)");
+        }
+    }
+
+    public class JoinGeometryByIdsTool : ToolBase
+    {
+        public override string Name => "join_geometry_by_ids";
+        public override string Description => "지정한 요소 ID 목록 간 Join Geometry를 수행합니다. 두 그룹(ids1, ids2) 사이 모든 조합을 결합합니다.";
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name, ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["required"] = new JArray { "ids1", "ids2" },
+                ["properties"] = new JObject
+                {
+                    ["ids1"] = new JObject { ["type"] = "array", ["items"] = new JObject { ["type"] = "integer" }, ["description"] = "첫 번째 요소 ID 목록" },
+                    ["ids2"] = new JObject { ["type"] = "array", ["items"] = new JObject { ["type"] = "integer" }, ["description"] = "두 번째 요소 ID 목록" },
+                    ["unjoin"] = new JObject { ["type"] = "boolean", ["description"] = "true면 결합 해제, false(기본)면 결합" }
+                }
+            }
+        };
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var ids1 = args["ids1"]!.ToObject<List<long>>()!.Select(id => doc.GetElement(new ElementId(id))).Where(e => e != null).ToList();
+            var ids2 = args["ids2"]!.ToObject<List<long>>()!.Select(id => doc.GetElement(new ElementId(id))).Where(e => e != null).ToList();
+            var unjoin = args["unjoin"]?.ToObject<bool>() ?? false;
+
+            int count = 0;
+            using var tx = new Transaction(doc, unjoin ? "MCP: Unjoin Geometry" : "MCP: Join Geometry");
+            tx.Start();
+            foreach (var e1 in ids1)
+            {
+                foreach (var e2 in ids2)
+                {
+                    try
+                    {
+                        if (unjoin)
+                        {
+                            if (!JoinGeometryUtils.AreElementsJoined(doc, e1!, e2!)) continue;
+                            JoinGeometryUtils.UnjoinGeometry(doc, e1!, e2!);
+                        }
+                        else
+                        {
+                            if (JoinGeometryUtils.AreElementsJoined(doc, e1!, e2!)) continue;
+                            JoinGeometryUtils.JoinGeometry(doc, e1!, e2!);
+                        }
+                        count++;
+                    }
+                    catch { }
+                }
+            }
+            tx.Commit();
+            return TextContent($"{(unjoin ? "결합 해제" : "결합")} 완료: {count}쌍");
+        }
+    }
+
+    public class SwitchJoinOrderTool : ToolBase
+    {
+        public override string Name => "switch_join_order";
+        public override string Description => "두 요소 간 Join 우선순위(절단 방향)를 반전합니다. 어떤 요소가 다른 요소를 절단할지 변경합니다.";
+        public override JObject GetSchema() => new JObject
+        {
+            ["name"] = Name, ["description"] = Description,
+            ["inputSchema"] = new JObject
+            {
+                ["type"] = "object",
+                ["required"] = new JArray { "elementId1", "elementId2" },
+                ["properties"] = new JObject
+                {
+                    ["elementId1"] = new JObject { ["type"] = "integer" },
+                    ["elementId2"] = new JObject { ["type"] = "integer" }
+                }
+            }
+        };
+        public override JToken Execute(Document doc, JObject args)
+        {
+            var e1 = doc.GetElement(new ElementId(args["elementId1"]!.ToObject<long>())) ?? throw new Exception("요소1 없음");
+            var e2 = doc.GetElement(new ElementId(args["elementId2"]!.ToObject<long>())) ?? throw new Exception("요소2 없음");
+            if (!JoinGeometryUtils.AreElementsJoined(doc, e1, e2))
+                throw new Exception("두 요소가 결합되어 있지 않습니다. 먼저 join_geometry_by_ids로 결합하세요.");
+            using var tx = new Transaction(doc, "MCP: Join 우선순위 반전");
+            tx.Start();
+            JoinGeometryUtils.SwitchJoinOrder(doc, e1, e2);
+            tx.Commit();
+            return TextContent($"Join 우선순위 반전 완료: {e1.Id.Value} ↔ {e2.Id.Value}");
+        }
+    }
 }
